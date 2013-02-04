@@ -1,0 +1,142 @@
+define(['jquery'], function($) {
+		
+	return function() {
+		
+		this.Map = {};
+		this.Column = {};
+		this.Thought = {};
+		
+		this.Map.model = Backbone.Model.extend({
+			defaults: {
+				
+			},	
+			
+			initialize: function(opt) {
+				
+			},
+		});
+		
+		
+		// collection of maps (search results)
+		this.Map.collection = Backbone.Collection.extend({
+			model: Map.model,
+			
+
+		});
+		
+		
+		// column of the map (Y axis)
+		this.Column.model = Backbone.Model.extend({
+				
+		});
+		
+		this.Column.collection = Backbone.Collection.extend({
+			model: Map.Column.model,
+			
+			initialize: function(opt) {
+				/*
+					This collection should listen to the addition of new thoughts.
+					Whenever a new thought is added to the map, the Columns should check
+					if the thought's position is already contained in the existing grid
+					or if the grid needs to be extended.
+				
+				*/
+				
+				_.bindAll(this);
+				
+				// listening to events on the Thought.collection
+				this.thoughts = opt.Map.Thought.collection;
+				
+				this.listenTo(opt.Map.Thought.collection, 'add', this.checkGrid)
+				
+			},
+			
+			checkGrid: function(thought) {
+				// compares the grid demanded by the map to the existing grid
+			},
+			
+			extendWest: function() {
+				// adds column to the WEST (left)
+			},
+			
+			extendEast: function() {
+				// adds column to the EAST (right)
+			},
+		});
+		
+
+		
+		/*
+		The thought model should be as "self-contained" as possible,
+		which means that it listens to multiples events and holds its own state, 
+		allowing for superior instances not to know anything about the thought models 
+		themselves.
+		
+		The map is built "from bottom up".
+		
+		- it knows where in the cartesian map it should be located;
+		- from its position, it also knows the column and the unit-position in the column
+		
+		- it knows it's relevance rate in the map
+		*/
+		
+		this.Thought = {};
+		
+		this.Thought.model = Backbone.Model.extend({
+			
+			defaults: {
+				display: 'none',
+				LatLng: false,
+				relevance: false,
+				
+			},
+			
+			initialize: function(opt) {
+				/*
+				opt:					
+					- Map			// the map object
+				*/
+				
+				this.Map = opt.Map;
+				
+				// verify if the column destinated to this thought
+				// has already been created
+			},
+			
+		});
+		
+		this.Thought.view = Backbone.View.extend({
+			initialize: function(opt) {
+				
+			},
+			
+			render: function() {
+				
+			}
+			
+		});
+		
+		/* 
+		The Thought.collection is a base class for the
+		Column controller and also for the 
+		
+		*/
+		
+		this.Thought.collection = Backbone.Collection.extend({
+				
+			model: Thought.model,
+			
+			initialize: function(opt) {
+				/* opt: 
+					
+				*/
+				this.opt = opt;
+			},
+			
+			
+		});
+				
+		
+		
+	};	// close the module function "app()"
+});

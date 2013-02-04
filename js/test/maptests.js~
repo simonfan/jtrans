@@ -1,0 +1,74 @@
+function loadModules(modArr, queue, modSetup) {
+	
+	// 'module' and 'queue' are obligatory
+	if (typeof modArr !== 'object') {
+		throw new Error(modArr[0] + 'The first argument must be an array of module names to be required.');
+	}
+	
+	
+	// define test name
+	var i,
+		length = modArr.length,
+		testName = 'loading modules: ';
+	
+	for (i = 0; i < length; i++) {
+		testName += ', ' + modArr[i];
+	}
+	
+	queue.call(testName, function(callbacks) {
+		
+		// define the function to be called when the module is loaded
+		if (typeof modSetup !== 'function') {
+			modSetup = function() {
+				
+				// run the require-returned arguments as functions
+				var i, l = arguments.length;
+				
+				for (i = 0; i < l; i ++) {
+					
+					if (typeof arguments[i] !== 'function') {
+						throw new TypeError('All modules are assumed to return a function if you do not pass a custom modSetup function. Please reformat the following module: "' + arguments[i].toString() || arguments[i] + '"');
+					}
+					
+					arguments[i]();
+				}
+				
+			};
+		}
+		
+		var setup = callbacks.add( modSetup );
+		
+		require(modArr, setup);
+			
+	});
+}
+
+AsyncTestCase("Loading Tests", {
+	"test app loading through requireJS": function(queue) {
+		
+		// load module map app
+		loadModules(['map-app'], queue);
+		
+		// test
+		queue.call('Assert loading success', function(callbacks) {
+				
+			var map = new Map.model();
+			
+			assertNotUndefined(map);	
+		});
+	}
+});
+
+
+AsyncTestCase('Thought objects', {
+	'test Thought.model defaults': function(queue) {
+		loadModules(['map-app'], queue);
+		
+		queue.call(function(callbacks) {
+			
+			var t = new Thought.model({Map: {} });
+			
+			assertEquals('none', t.get('display') );
+		});
+	}
+});

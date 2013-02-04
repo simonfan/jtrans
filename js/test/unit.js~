@@ -1,0 +1,490 @@
+var deps = ['jquery','app','backbone','underscore'];
+
+define(deps, function($, app, Backbone, underscore, undefined) {
+	
+		
+	// T is the var used to save the basic instance of 
+	// the plugin
+	window.T = {};
+		
+	function basicSetup() {
+		console.log('setup run');
+		
+		T.fixture = $('#qunit-fixture');
+		T.play = T.fixture.append('<div id="playground"></div>');
+		
+		T.trans = T.play.jtrans();
+	};
+	
+	function basicTeardown() {
+		console.log('teardown run');
+		
+		var fixture = $('#qunit-fixture');
+		
+		fixture.empty();
+		
+		T.trans.jtrans('obj').remove();
+		
+	};
+		
+	return function() {
+		
+		console.log('running tests');
+		
+		
+		module('jtrans initialization', { setup: basicSetup, teardown: basicTeardown} );
+		
+		// 1
+		test('jQuery plugin namespace def', 1, function() {
+				
+			var test = '';
+				
+			if ( T.trans ) {
+				
+				test = 'success';
+				
+			} else {
+				
+				test = 'fail';
+				
+			}
+			
+			equal(test, 'success', 'Checking if the $.jtrans() actually generates an object');
+		});
+		
+		// 2
+		test('pluginObj retrieval', 1, function() {
+			
+			var test = '';
+			
+			if (T.trans.jtrans('obj')) {
+				test = 'success';
+			} else {
+				test = 'fail';
+			}
+			
+			equal(test, 'success');
+				
+		})
+		
+		
+		// 3
+		test('Get default options', 3, function() {
+			
+			equal(T.trans.jtrans('obj').get('overlap'), 0, 'Expect "overlap: 0" as Default');
+			equal(T.trans.jtrans('obj').get('duration'), 500, 'Expect "duration: 500" as Default');
+			equal(T.trans.jtrans('get','transitionType'), 'fade', 'Expect "type: fade" as Default');
+			
+		});
+		
+		// 4
+		test('Options setting (by string)', 1, function() {
+			
+			T.trans.jtrans('set', 'string setting', 'set!');
+			
+			equal( T.trans.jtrans('get', 'string setting'), 'set!', 'Setting by string mode' );
+		});
+		
+		// 5
+		test('Options setting (by object mode)', 2, function() {
+			
+			T.trans.jtrans('obj').set({ set1: 'test1', set2: 'test2' });
+			
+			equal(T.trans.jtrans('obj').get('set1'), 'test1');
+			equal(T.trans.jtrans('get','set2'), 'test2');
+				
+		});
+		
+		// 6
+		test('Plugin removal', function() {
+			var el = document.createElement('div'),
+				fixture = $('#qunit-fixture').append(el),
+				plugin = $(el).jtrans('obj');
+				
+			// assert that the plugin has been initialized
+			ok(plugin);
+			
+			plugin.remove();
+			
+			equal($.data(el, 'jtrans'), undefined );
+		});
+		
+		// 7
+		test('Directly get the pluginObj, instead of initializing it and requesting it', function() {
+			// create two new html elements to use it in the instantiation of
+			// new transition plugin objs
+			
+			var el = document.createElement('div'),
+				fixture = $('#qunit-fixture');
+				
+			fixture.append(el);
+			
+			// indirectly request the plugin obj
+			var indirect = $(el).jtrans().jtrans('obj');
+			
+			ok(indirect, 'asserts that the initial plugin has been created');
+			
+			indirect.remove();
+			
+			equal($.data(el, 'jtrans'), undefined, 'asserts that the initial plugin has been removed' );
+			
+			// directly request the plugin obj, and use the clone function, 
+			// as it has removed the prototypal properties of the indirect object
+			var direct = $(el).jtrans('obj');
+			
+			
+			console.log('deeqweq eqw ewqe qe qwe qew qeq', direct.options, indirect.options);
+			
+			deepEqual(direct.options, indirect.options, 'final assertion');
+			
+		});
+		
+		
+		
+		// 2nd module: Plugin.prototype.element
+		
+		module('Plugin.prototype.element Model and Collection', {
+			setup: function() {
+				basicSetup();
+				
+				// set up the pluginObj
+				T.pluginObj = T.trans.jtrans('obj');
+			},
+			teardown: function() {
+				basicTeardown();
+				
+				T.pluginObj.remove();
+			}
+		});
+		
+		// 8
+		test('Model instantiation and default testing', 1, function() {
+			var elementCollection = new T.pluginObj.Constructors.ElementCollection([], { pluginObj: T.pluginObj }),
+				elementModel = new T.pluginObj.Constructors.ElementModel({
+					id: 'test model', 
+					elCollection: elementCollection
+				});
+			
+			equal(elementModel.get('display'), 'not-initialized');
+		});
+		
+		// 9
+		test('Model set option values and fire events', function() {
+			
+			// first add listeners
+			var collection = new T.pluginObj.Constructors.ElementCollection([], { pluginObj: T.pluginObj }),
+				model = new T.pluginObj.Constructors.ElementModel({
+					id: 'test model',
+					elCollection: collection
+				}),
+				testObj = { testValue: 'not-modified' };
+			
+			model.on( 'change:display', function() {
+				testObj.testValue = 'modified';
+			});
+			
+			model.set({ display: 'modified' });
+			
+			equal(testObj.testValue, 'modified');
+			
+		});
+		
+		// 10
+		test('Collection adding a Model', function() {
+			var plugin = T.trans.jtrans('obj'),
+				elCollection = new plugin.Constructors.ElementCollection([], { pluginObj: T.pluginObj });
+			
+			// first test the Model adding
+				
+			elCollection.add({ id: 'testname', elCollection: elCollection });
+			
+			var newModel = elCollection.get('testname');
+			
+			equal(newModel.get('display'), 'not-initialized');
+		});
+		
+		// 11
+		test('Plugin firing event', function() {
+			var testVar = 'not-modified',
+				triggerCount = 0;
+				
+			T.pluginObj.events.once('pagehidden', function() {
+				testVar = 'modified ' + triggerCount;
+			});
+			
+			triggerCount += 1;
+			T.pluginObj.events.trigger('pagehidden');
+			
+			equal(testVar, 'modified 1');
+			
+			
+			// this second time the event is fired, it should not run the function
+			triggerCount += 1;
+			T.pluginObj.events.trigger('pagehidden');
+			
+			equal(testVar, 'modified 1');
+			equal(triggerCount, 2);
+		});		
+		
+		// 4th module
+		module('Plugin.prototype.Utils', {setup: basicSetup, teardown: basicTeardown});
+		
+		test('test validateObj', function() {
+			
+			var obj = {
+					func: function() {},
+					string: 'string',
+					obj: {}
+				}, 
+				props = {
+					func: 'function',
+					string: 'string',
+					obj: 'object'
+				}
+				
+			ok( T.pluginObj.Utils.validateObj(obj, props), 'expect the validation to return true' )
+				
+		});
+		
+		
+		
+		test('arrStrObj: test the string and the arrItem functionalities', function() {
+			
+			var	test = {
+					str: 'test string',
+					arr: ['arr1','arr2','arr3'],
+					obj: {
+						obj1: 'val1',
+						obj2: 'val2',
+						obj3: 'val3'
+					}
+				};
+				
+			// first test the string and the arrItem functionalities
+			function doTest(obj, c) {
+			
+				T.pluginObj.Utils.arrStrObj({
+					obj: obj,
+					funcs: {
+						str: function(val) {
+							c.string = val;
+						},
+						arrItem: function(val, index) {
+							c.arr.push(val);
+						},
+						arr: function(arr) {
+							c.arr.push(arr);
+						}
+					}
+				});
+			}
+			
+			var controlStr = {
+					string: false,
+					arr: []
+				};
+				
+
+			
+			// test using str
+			doTest(test.str, controlStr);
+			
+			equal(controlStr.string, test.str, 'expect the function str to be used');
+			notEqual(controlStr.arr[0], test.str, 'expect the function arrItem not to be used');
+			
+			
+			
+			var controlArrItem = {
+					string: false,
+					arr: []
+				};
+			
+			// test using arrItem
+			doTest(test.arr, controlArrItem);
+			
+			deepEqual(controlArrItem.arr, test.arr, 'expect the function arrItem to be used');
+			ok(!controlArrItem.str, 'expect the function str not to be used');
+			
+			
+
+			
+			
+			// test using arr
+			function doTestWithoutArrItem(obj, c) {
+			
+				T.pluginObj.Utils.arrStrObj({
+					obj: obj,
+					funcs: {
+						str: function(val) {
+							c.string = val;
+						},
+						arr: function(arr) {
+							c.arr = arr;
+						}
+					}
+				});
+			}			
+			
+			var controlArr = {
+					string: false,
+					arr: false
+				};
+				
+			doTestWithoutArrItem(test.arr, controlArr);
+			
+			deepEqual(controlArr.arr, test.arr, 'expect the function arr to be used');
+			
+			ok(!controlArr.str, 'expect the function str not to be used');
+		});
+		
+		
+		
+		
+		
+		module('Adding elements', {
+			setup: function() {
+				basicSetup();
+				
+				// set up the pluginObj
+				T.pluginObj = T.trans.jtrans('obj');
+			},
+			teardown: function() {
+				basicTeardown();
+				
+				T.pluginObj.remove();
+			}
+		});
+		
+		test('advanced get, with model getting', function() {
+			var info = {
+					id: 'test element',
+					test: 'info iakfdq ewqwe q e',
+				};
+				
+			T.pluginObj.addElement(info);
+			
+			
+			ok(T.pluginObj.elCollection.get(info.id), 'expect the element to be instantiated' )
+			
+			equal(T.pluginObj.get('element', info.id).get('test'), info.test);
+		});
+		
+		test('advanced get, with property getting', function() {
+			var info = {
+					id: 'test emqwe qwasda',
+					test: 'asdqw eqwe q'
+				};
+				
+			T.pluginObj.addElement(info);
+			
+			equal(
+				T.pluginObj
+					.get('prop', 'elCollection')
+					.get(info.id)
+					.get('test'), 
+				info.test);
+		});
+		
+		
+		
+		
+		
+		
+		
+		
+		// 
+		module('Plugin.prototype.element View', {
+			setup: function() {
+				basicSetup();
+				
+				// set up the pluginObj
+				T.pluginObj = T.trans.jtrans('obj');
+			},
+			teardown: function() {
+				basicTeardown();
+			}
+		});
+		
+		test('view initialization', function() {
+			var options = {
+					id: 'testing model',
+					overlap: 1.5,
+					testing: 'testing!'
+				};
+				
+			T.pluginObj.addElement(options);			
+			
+			// model created
+			var model = T.pluginObj.get('element', options.id);
+			
+			ok(model, 'ok, the model was added');
+			
+			// data saved in the model
+			equal(model.get('testing'), 'testing!', 'ok, the data was saved!');
+			
+			// view exists
+			var view = T.pluginObj.elCollection.get('testing model').elView;
+			
+			ok(view, 'ok, model has got an elView');
+			
+			// view has access to model
+			deepEqual(view.elModel, model, 'view has access to model');
+			
+			// view has access to collection
+			deepEqual(view.elCollection, T.pluginObj.elCollection);
+			
+			// view has access to pluginObj
+			deepEqual(view.pluginObj, T.pluginObj);
+		});
+		
+		test('test alternative Backbone.View passing it to the options in pluginObj.addElement', function() {
+			var testcontrol = {};
+			
+			
+			console.log('pluginObj.Element', T.pluginObj.Element);
+				
+			var altView = T.pluginObj.Constructors.ElementView.extend({
+				extendedInitialize: function(opts) {
+					// testing
+					testcontrol.initialization = true;
+					
+					this.render();
+					
+				},
+				
+				render: function() {
+					testcontrol.rendering = true;
+				}
+			});
+			
+			
+			var options = {
+					id: 'test!',
+					view: altView
+				};
+				
+			T.pluginObj.addElement(options);
+			
+			var view = T.pluginObj.get('element',options.id).elView;
+			
+			// test if view was created
+			ok(view, 'ok, view was really instantiated');
+			
+			// test if the extended initialization was run
+			ok(testcontrol.initialization, 'ok, extended initialization was run');
+			
+			// test if the render was automatically run
+			ok(testcontrol.rendering, 'ok, rendering was automatically run in the extended initialization');
+
+			// check if the 'el' is a 'li', as defined in the default options of the original view
+			equal(view.el.tagName, 'LI', 'tagName was really LI. GREAT!');
+		});
+		
+		
+		
+		
+		
+		
+		
+	}
+});

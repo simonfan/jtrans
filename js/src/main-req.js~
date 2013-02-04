@@ -1,0 +1,23 @@
+require.config({
+	urlArgs: "bust=" + Math.random(),
+	baseUrl: '',
+	paths: {
+		'jquery': 'lib/jquery',
+		'underscore': 'lib/underscore',
+		'backbone': 'lib/backbone',
+		'map-app': 'src/map-app'
+	},
+	shim: {
+		'backbone': {
+			deps: ['underscore', 'jquery'],
+			exports: 'Backbone'
+		},
+		'map-app': {
+			deps: ['jquery','underscore','backbone']
+		}
+	}
+});
+
+require(['map-app'], function(app) {
+	app();
+});

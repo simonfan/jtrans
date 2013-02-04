@@ -1,0 +1,921 @@
+<!DOCTYPE html>  <html> <head>   <title>app-v2.js</title>   <meta http-equiv="content-type" content="text/html; charset=UTF-8">   <link rel="stylesheet" media="all" href="docco.css" /> </head> <body>   <div id="container">     <div id="background"></div>          <table cellpadding="0" cellspacing="0">       <thead>         <tr>           <th class="docs">             <h1>               app-v2.js             </h1>           </th>           <th class="code">           </th>         </tr>       </thead>       <tbody>                               <tr id="section-1">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-1">&#182;</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre><span class="nx">define</span><span class="p">([</span><span class="s1">&#39;jquery&#39;</span><span class="p">,</span><span class="s1">&#39;backbone&#39;</span><span class="p">,</span><span class="s1">&#39;underscore&#39;</span><span class="p">],</span> <span class="kd">function</span><span class="p">(</span><span class="nx">$</span><span class="p">,</span> <span class="nx">Backbone</span><span class="p">,</span> <span class="nx">underscore</span><span class="p">,</span> <span class="kc">undefined</span><span class="p">)</span> <span class="p">{</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-2">&#182;</a>               </div>               <p>underscore template settings</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">_</span><span class="p">.</span><span class="nx">templateSettings</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="nx">evaluate</span><span class="o">:</span> <span class="sr">/\{\[([\s\S]+?)\]\}/g</span><span class="p">,</span>
+  <span class="nx">interpolate</span><span class="o">:</span> <span class="sr">/\{\{(.+?)\}\}/g</span><span class="p">,</span>
+  <span class="nx">variable</span><span class="o">:</span> <span class="s1">&#39;data&#39;</span>
+<span class="p">};</span></pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-3">&#182;</a>               </div>               <p>defaultCss's properties will be set on the 
+Constructors.ElementView $el (the 'LI') on View initialization.
+Their properties should be overridden when instantiating 
+new elements, in the 'elCss' property.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="kd">var</span> <span class="nx">defaultCss</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">listStyle</span><span class="o">:</span> <span class="s1">&#39;none&#39;</span><span class="p">,</span>
+    <span class="nx">margin</span><span class="o">:</span> <span class="s1">&#39;0 0 0 0&#39;</span><span class="p">,</span>
+    <span class="nx">padding</span><span class="o">:</span> <span class="s1">&#39;0 0 0 0&#39;</span><span class="p">,</span>
+    <span class="nx">width</span><span class="o">:</span> <span class="s1">&#39;100%&#39;</span><span class="p">,</span>
+    <span class="nx">height</span><span class="o">:</span> <span class="s1">&#39;100%&#39;</span><span class="p">,</span> 
+    <span class="nx">zIndex</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="nx">opacity</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="nx">display</span><span class="o">:</span> <span class="s1">&#39;none&#39;</span><span class="p">,</span>
+    <span class="nx">top</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="nx">left</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="nx">position</span><span class="o">:</span> <span class="s1">&#39;absolute&#39;</span>
+  <span class="p">};</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-4">&#182;</a>               </div>               <p>The transitions var is used to store the transition objects.
+When calling '.registerTransition()', a TransitionObject is added here.        </p>             </td>             <td class="code">               <div class="highlight"><pre><span class="kd">var</span> <span class="nx">transitions</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">fade</span><span class="o">:</span> <span class="p">{</span>
+      <span class="nx">show</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">defer</span><span class="p">,</span> <span class="nx">duration</span><span class="p">)</span> <span class="p">{</span>
+        
+        <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+        
+        <span class="k">this</span><span class="p">.</span><span class="nx">$el</span><span class="p">.</span><span class="nx">css</span><span class="p">(</span><span class="s1">&#39;display&#39;</span><span class="p">,</span><span class="s1">&#39;block&#39;</span><span class="p">);</span>
+        
+        <span class="k">this</span><span class="p">.</span><span class="nx">setup</span><span class="p">();</span>
+        
+        <span class="k">this</span><span class="p">.</span><span class="nx">$el</span><span class="p">.</span><span class="nx">animate</span><span class="p">({</span><span class="nx">opacity</span><span class="o">:</span> <span class="mi">1</span><span class="p">},</span> 
+          <span class="p">{</span>
+            <span class="nx">duration</span><span class="o">:</span> <span class="nx">duration</span><span class="p">,</span>
+            <span class="nx">complete</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+              <span class="nx">defer</span><span class="p">.</span><span class="nx">resolve</span><span class="p">();</span>
+            <span class="p">}</span>
+          <span class="p">});</span>
+      <span class="p">},</span>
+      <span class="nx">hide</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">defer</span><span class="p">,</span> <span class="nx">duration</span><span class="p">)</span> <span class="p">{</span>
+        
+        <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+        
+        <span class="k">this</span><span class="p">.</span><span class="nx">$el</span><span class="p">.</span><span class="nx">animate</span><span class="p">({</span><span class="nx">opacity</span><span class="o">:</span> <span class="mi">0</span><span class="p">},</span>
+          <span class="p">{</span>
+            <span class="nx">duration</span><span class="o">:</span> <span class="nx">duration</span><span class="p">,</span>
+            <span class="nx">complete</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+              <span class="nx">self</span><span class="p">.</span><span class="nx">teardown</span><span class="p">();</span>
+              <span class="nx">self</span><span class="p">.</span><span class="nx">$el</span><span class="p">.</span><span class="nx">css</span><span class="p">(</span><span class="s1">&#39;display&#39;</span><span class="p">,</span><span class="s1">&#39;none&#39;</span><span class="p">);</span>
+              
+              <span class="nx">defer</span><span class="p">.</span><span class="nx">resolve</span><span class="p">();</span>
+            <span class="p">}</span>
+          <span class="p">});</span>             
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">};</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-5">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-5">&#182;</a>               </div>               <p>This Utility function checks if the plugin is instantiated and runs the 
+right callback function (yes or no)</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="kd">function</span> <span class="nx">isInstantiated</span><span class="p">(</span><span class="nx">element</span><span class="p">,</span> <span class="nx">actions</span><span class="p">)</span> <span class="p">{</span>
+  
+  <span class="kd">var</span> <span class="nx">pluginObj</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">data</span><span class="p">(</span><span class="nx">element</span><span class="p">,</span> <span class="nx">pluginName</span><span class="p">);</span>
+  
+  <span class="k">if</span> <span class="p">(</span><span class="nx">pluginObj</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">actions</span><span class="p">.</span><span class="nx">yes</span><span class="p">(</span><span class="nx">pluginObj</span><span class="p">);</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>        
+    <span class="nx">actions</span><span class="p">.</span><span class="nx">no</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span></pre></div>             </td>           </tr>                               <tr id="section-6">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-6">&#182;</a>               </div>               <p>This Utility function checks if the responseArr is composed of only one value
+and if so, it responds with the value directly instead of an array</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="kd">function</span> <span class="nx">respond</span><span class="p">(</span><span class="nx">responseArr</span><span class="p">)</span> <span class="p">{</span>
+  
+  <span class="k">if</span> <span class="p">(</span><span class="nx">responseArr</span><span class="p">.</span><span class="nx">length</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">responseArr</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">responseArr</span><span class="p">.</span><span class="nx">length</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">responseArr</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">responseArr</span><span class="p">;</span> 
+  <span class="p">}</span>
+<span class="p">}</span></pre></div>             </td>           </tr>                               <tr id="section-7">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-7">&#182;</a>               </div>               <p>Validates any object by verifying properties and respective 'typeofs'.
+The 'props' var should be an object in the format: props = { propName: 'expected typeof' }</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="kd">function</span> <span class="nx">validateObj</span><span class="p">(</span><span class="nx">obj</span><span class="p">,</span> <span class="nx">props</span><span class="p">)</span> <span class="p">{</span>
+  <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">props</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">expected_type</span><span class="p">,</span> <span class="nx">prop_name</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">actual_type</span> <span class="o">=</span> <span class="k">typeof</span> <span class="nx">obj</span><span class="p">[</span><span class="nx">prop_name</span><span class="p">];</span>
+      
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">obj</span><span class="p">[</span><span class="nx">prop_name</span><span class="p">])</span> <span class="p">{</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="s2">&quot;There is no &#39;&quot;</span> <span class="o">+</span> <span class="nx">prop_name</span> <span class="o">+</span> <span class="s2">&quot;&#39; in &quot;</span> <span class="o">+</span> <span class="nx">obj</span><span class="p">);</span>
+    <span class="p">}</span>
+    
+    <span class="k">if</span> <span class="p">(</span><span class="nx">actual_type</span> <span class="o">!=</span> <span class="nx">expected_type</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nx">TypeError</span><span class="p">(</span><span class="s2">&quot;The property &#39;&quot;</span> <span class="o">+</span> <span class="nx">prop_name</span> <span class="o">+</span> <span class="s2">&quot;&#39; from &quot;</span> <span class="o">+</span> <span class="nx">obj</span> <span class="o">+</span> <span class="s2">&quot; is not a &#39;&quot;</span> <span class="o">+</span> <span class="nx">expected_type</span> <span class="o">+</span> <span class="s2">&quot;&#39; but a &#39;&quot;</span> <span class="o">+</span> <span class="nx">actual_type</span> <span class="o">+</span> <span class="s2">&quot;&#39;&quot;</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">});</span>
+  <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+<span class="p">}</span></pre></div>             </td>           </tr>                               <tr id="section-8">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-8">&#182;</a>               </div>               <p>Function validates a transition object using validateObj</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="kd">function</span> <span class="nx">validateTransition</span><span class="p">(</span><span class="nx">transition</span><span class="p">,</span> <span class="nx">name</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">props</span> <span class="o">=</span> <span class="p">{</span>
+      <span class="nx">show</span><span class="o">:</span> <span class="s1">&#39;function&#39;</span><span class="p">,</span>
+      <span class="nx">hide</span><span class="o">:</span> <span class="s1">&#39;function&#39;</span>
+    <span class="p">},</span>
+    <span class="nx">val</span> <span class="o">=</span> <span class="nx">validateObj</span><span class="p">(</span><span class="nx">transition</span><span class="p">,</span> <span class="nx">props</span><span class="p">);</span>
+    
+  <span class="k">return</span> <span class="nx">val</span><span class="p">;</span>
+<span class="p">}</span></pre></div>             </td>           </tr>                               <tr id="section-9">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-9">&#182;</a>               </div>               <p>Function checks if the i.obj is an array, string or object and
+calls the corresponding function in the provided context.
+If the obj is a STRING: pass it directly to the 'str' function;
+If it is an ARRAY: 
+  1 - If 'arrItem' exists, iterate over the array using the 'arrItem'
+     as the iterator.
+  2 - Else if 'arr' exists, pass the array directly.
+If it is an OBJECT: not implemented yet</p>
+
+<p>i:
+    - obj,*
+    - funcs:*
+        - str,  *
+        - arrItem,  *
+        - arr,  *
+        - objItem,
+        - obj
+    - context</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="kd">function</span> <span class="nx">arrStr</span><span class="p">(</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">type</span> <span class="o">=</span> <span class="k">typeof</span> <span class="nx">i</span><span class="p">.</span><span class="nx">obj</span><span class="p">;</span>
+  
+  <span class="k">if</span> <span class="p">(</span><span class="nx">type</span> <span class="o">===</span> <span class="s1">&#39;string&#39;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">i</span><span class="p">.</span><span class="nx">funcs</span><span class="p">.</span><span class="nx">str</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">i</span><span class="p">.</span><span class="nx">context</span><span class="p">,</span> <span class="nx">i</span><span class="p">.</span><span class="nx">obj</span><span class="p">);</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span> <span class="nx">_</span><span class="p">.</span><span class="nx">isArray</span><span class="p">(</span><span class="nx">i</span><span class="p">.</span><span class="nx">obj</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+    
+    <span class="k">if</span> <span class="p">(</span><span class="nx">i</span><span class="p">.</span><span class="nx">funcs</span><span class="p">.</span><span class="nx">arrItem</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">i</span><span class="p">.</span><span class="nx">obj</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">val</span><span class="p">,</span> <span class="nx">index</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">i</span><span class="p">.</span><span class="nx">funcs</span><span class="p">.</span><span class="nx">arrItem</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">i</span><span class="p">.</span><span class="nx">context</span><span class="p">,</span> <span class="nx">val</span><span class="p">,</span> <span class="nx">index</span><span class="p">);</span>
+      <span class="p">});</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="nx">i</span><span class="p">.</span><span class="nx">funcs</span><span class="p">.</span><span class="nx">arr</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">i</span><span class="p">.</span><span class="nx">context</span><span class="p">,</span> <span class="nx">i</span><span class="p">.</span><span class="nx">obj</span><span class="p">);</span>
+    <span class="p">}</span>
+    
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    
+    <span class="k">if</span> <span class="p">(</span><span class="nx">i</span><span class="p">.</span><span class="nx">funcs</span><span class="p">.</span><span class="nx">obj</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">i</span><span class="p">.</span><span class="nx">funcs</span><span class="p">.</span><span class="nx">obj</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">i</span><span class="p">.</span><span class="nx">context</span><span class="p">,</span> <span class="nx">i</span><span class="p">.</span><span class="nx">obj</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="nx">i</span><span class="p">.</span><span class="nx">funcs</span><span class="p">.</span><span class="nx">arr</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">i</span><span class="p">.</span><span class="nx">context</span><span class="p">,</span> <span class="nx">i</span><span class="p">.</span><span class="nx">obj</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span></pre></div>             </td>           </tr>                               <tr id="section-10">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-10">&#182;</a>               </div>               <p>requireDefer is an wrapper of a RequireJS 'require' function.
+It receives the name of the module to be required and a function that will 
+deal with the requirement's response.
+Then, by using a $.Deferred() object, it calls the requireSuccess when the require is ready.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="kd">function</span> <span class="nx">requireDefer</span><span class="p">(</span><span class="nx">modName</span><span class="p">,</span> <span class="nx">requireSuccess</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">deferral</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">Deferred</span><span class="p">();</span>
+  
+  <span class="nx">require</span><span class="p">([</span><span class="nx">modName</span><span class="p">],</span> <span class="kd">function</span><span class="p">(</span><span class="nx">module</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">requireSuccess</span><span class="p">(</span><span class="nx">module</span><span class="p">);</span>
+    <span class="nx">deferral</span><span class="p">.</span><span class="nx">resolve</span><span class="p">();</span>
+  <span class="p">})</span>
+  
+  <span class="k">return</span> <span class="nx">deferral</span><span class="p">;</span>
+<span class="p">}</span></pre></div>             </td>           </tr>                               <tr id="section-11">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-11">&#182;</a>               </div>               <p>waitFor receives ANY number of 'eventObjects', which are composed of:
+- emitter,    (the object to listen to)
+- name,        (the name of the event to be listened)
+- check        (a function used to check if the event has already happened);
+The 'waitFor' then builds a $.Deferred() object, which is returned
+and will only be solved when all the events happen (or have already happened);
+That is done by creating one $.Deferred() object to be resolved at each event
+triggering.
+Parameters:
+o:
+- emitter,        ->  object
+- events,        ->  array of strings or array of "event-objects"
+- permanent,    ->  boolean, defaults to FALSE
+- callback,
+- [context]</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="kd">function</span> <span class="nx">waitFor</span><span class="p">(</span><span class="nx">o</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">waitList</span> <span class="o">=</span> <span class="p">[];</span>
+  
+  <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">o</span><span class="p">.</span><span class="nx">events</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">e</span><span class="p">,</span> <span class="nx">index</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">defer</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">Deferred</span><span class="p">(),</span>
+      <span class="nx">emitter</span> <span class="o">=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">emitter</span> <span class="o">||</span> <span class="nx">o</span><span class="p">.</span><span class="nx">emitter</span><span class="p">,</span>
+      <span class="nx">event</span> <span class="o">=</span> <span class="nx">e</span><span class="p">.</span><span class="nx">name</span> <span class="o">||</span> <span class="nx">e</span><span class="p">,</span>
+      <span class="nx">check</span> <span class="o">=</span> <span class="k">typeof</span> <span class="nx">e</span><span class="p">.</span><span class="nx">check</span> <span class="o">==</span> <span class="s1">&#39;function&#39;</span> <span class="o">?</span> <span class="nx">e</span><span class="p">.</span><span class="nx">check</span><span class="p">()</span> <span class="o">:</span> <span class="kc">false</span><span class="p">;</span>
+      
+    <span class="k">if</span> <span class="p">(</span> <span class="nx">check</span> <span class="p">)</span> <span class="p">{</span>
+      <span class="nx">defer</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="nx">emitter</span><span class="p">.</span><span class="nx">once</span><span class="p">(</span><span class="nx">event</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="nx">defer</span><span class="p">.</span><span class="nx">resolve</span><span class="p">();</span> <span class="p">});</span>
+    <span class="p">}</span>
+      
+    <span class="nx">waitList</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">defer</span><span class="p">);</span>
+  <span class="p">});</span>
+  
+  <span class="nx">$</span><span class="p">.</span><span class="nx">when</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="nx">waitList</span><span class="p">).</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="nx">o</span><span class="p">.</span><span class="nx">callback</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="nx">o</span><span class="p">.</span><span class="nx">context</span><span class="p">,</span> <span class="nx">arguments</span><span class="p">);</span>
+    
+    <span class="k">if</span> <span class="p">(</span><span class="nx">o</span><span class="p">.</span><span class="nx">permanent</span><span class="p">)</span> <span class="p">{</span> <span class="nx">waitFor</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="kc">null</span><span class="p">,</span> <span class="nx">o</span><span class="p">);</span> <span class="p">}</span>
+  <span class="p">});</span>
+<span class="p">}</span></pre></div>             </td>           </tr>                               <tr id="section-12">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-12">&#182;</a>               </div>               <p>Utils holds all the utility functions</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="kd">var</span> <span class="nx">Utils</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="nx">isInstantiated</span><span class="o">:</span> <span class="nx">isInstantiated</span><span class="p">,</span>
+  <span class="nx">respond</span><span class="o">:</span> <span class="nx">respond</span><span class="p">,</span>
+  <span class="nx">validateTransition</span><span class="o">:</span> <span class="nx">validateTransition</span><span class="p">,</span>
+  <span class="nx">validateObj</span><span class="o">:</span> <span class="nx">validateObj</span><span class="p">,</span>
+  <span class="nx">arrStr</span><span class="o">:</span> <span class="nx">arrStr</span><span class="p">,</span>
+  <span class="nx">requireDefer</span><span class="o">:</span> <span class="nx">requireDefer</span><span class="p">,</span>
+  <span class="nx">waitFor</span><span class="o">:</span> <span class="nx">waitFor</span>
+<span class="p">}</span></pre></div>             </td>           </tr>                               <tr id="section-13">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-13">&#182;</a>               </div>               <p>Constructors hold all the Backbone constructors</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="kd">var</span> <span class="nx">Constructors</span> <span class="o">=</span> <span class="p">{};</span></pre></div>             </td>           </tr>                               <tr id="section-14">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-14">&#182;</a>               </div>               <p>The ElementView is a Backbone.View that coordinates interactions and events
+on the HTML. It listens to events on the ElementModel (described below).
+If you wish to listen to events, add other functionalities to the ElementView
+of your element, you should build a CustomElementView, by extending 
+PluginObj.Constructors.ElementView as you would do with a Backbone.View.
+If you need to set any options on the View initialization, please DO NOT overwrite
+the property 'initialize', as it is used by the Constructor.ElementView
+to set up basic transition methods. Instead, you may overwrite the 
+'extendedInitialize' property, which is a no-op in the default ElementView,
+and is called at the end of the default initialize method.
+By extending the default ElementView, you gain access to the following objects:
+- elModel (the element model, where data about the transition and view are set)
+- elCollection (the element collection, which contains all the models in the transition object)
+- pluginObj</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Constructors</span><span class="p">.</span><span class="nx">ElementView</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">View</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span></pre></div>             </td>           </tr>                               <tr id="section-15">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-15">&#182;</a>               </div>               <p>The default tagName for the view is a list element. 
+It is appended to the 'ul' element by '.basicRender'</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nx">tagName</span><span class="o">:</span> <span class="s1">&#39;li&#39;</span><span class="p">,</span>
+  <span class="nx">initialize</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">opts</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">_</span><span class="p">.</span><span class="nx">bindAll</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+    
+    <span class="kd">var</span> <span class="nx">_this</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-16">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-16">&#182;</a>               </div>               <p>Check if all necessary data has been passed in the options object</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">opts</span><span class="p">.</span><span class="nx">elModel</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="s1">&#39;No opts.elModel passed to View initialization&#39;</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">opts</span><span class="p">.</span><span class="nx">elCollection</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="s1">&#39;No opts.elCollection passed to View initialization&#39;</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">opts</span><span class="p">.</span><span class="nx">pluginObj</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="s1">&#39;No opts.pluginObj passsed to View initialization&#39;</span><span class="p">);</span>
+    <span class="p">}</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-17">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-17">&#182;</a>               </div>               <p>Save reference to elModel, elCollection, pluginObj</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="k">this</span><span class="p">.</span><span class="nx">elModel</span> <span class="o">=</span> <span class="nx">opts</span><span class="p">.</span><span class="nx">elModel</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">elCollection</span> <span class="o">=</span> <span class="nx">opts</span><span class="p">.</span><span class="nx">elCollection</span><span class="p">;</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">pluginObj</span> <span class="o">=</span> <span class="nx">opts</span><span class="p">.</span><span class="nx">pluginObj</span><span class="p">;</span>
+    
+    <span class="k">this</span><span class="p">.</span><span class="nx">extendedInitialize</span><span class="p">(</span><span class="nx">opts</span><span class="p">);</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">basicRender</span><span class="p">();</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-18">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-18">&#182;</a>               </div>               <p>The event 'change:display' is a crucial event in the 
+architecture of the transitions plugin.
+Whenever it changes in each model, the respective view is triggered
+to set its own display to the corresponding status. If the 
+display property does not change, then nothing occurs.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="k">this</span><span class="p">.</span><span class="nx">listenTo</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">elModel</span><span class="p">,</span> <span class="s1">&#39;change:display&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">model</span><span class="p">,</span> <span class="nx">value</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">_this</span><span class="p">.</span><span class="nx">setDisplay</span><span class="p">(</span><span class="nx">model</span><span class="p">,</span> <span class="nx">value</span><span class="p">);</span> 
+    <span class="p">});</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-19">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-19">&#182;</a>               </div>               <p>The rendering function awaits the 'view-instantiated' to start.
+The 'view-instantiated' event is fired by the '.setView()' method
+on the model. It is fired right after the view had been instantiated
+AND the template is loaded.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="k">this</span><span class="p">.</span><span class="nx">listenTo</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">elModel</span><span class="p">,</span> <span class="s1">&#39;view-instantiated&#39;</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">render</span><span class="p">);</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-20">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-20">&#182;</a>               </div>               <p>Whenever the property 'fillInFields' on the model changes,
+map the fields again. 
+Whenever the property 'dataObj' on the model changes,
+the view should update itself by calling fillIn.
+And the view should set it's own display.</p>
+
+<p>But that should only occur once the rendering is ready.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="k">this</span><span class="p">.</span><span class="nx">elModel</span><span class="p">.</span><span class="nx">once</span><span class="p">(</span><span class="s1">&#39;render-ready&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+      <span class="nx">_this</span><span class="p">.</span><span class="nx">listenTo</span><span class="p">(</span><span class="nx">_this</span><span class="p">.</span><span class="nx">elModel</span><span class="p">,</span> <span class="s1">&#39;change:fillInFields&#39;</span><span class="p">,</span> <span class="nx">_this</span><span class="p">.</span><span class="nx">mapFields</span><span class="p">);</span>
+      <span class="nx">_this</span><span class="p">.</span><span class="nx">listenTo</span><span class="p">(</span><span class="nx">_this</span><span class="p">.</span><span class="nx">elModel</span><span class="p">,</span> <span class="s1">&#39;change:dataObj&#39;</span><span class="p">,</span> <span class="nx">_this</span><span class="p">.</span><span class="nx">fillIn</span><span class="p">);</span>
+      
+      <span class="nx">_this</span><span class="p">.</span><span class="nx">mapFields</span><span class="p">();</span>
+      <span class="nx">_this</span><span class="p">.</span><span class="nx">fillIn</span><span class="p">();</span>
+      
+      <span class="nx">_this</span><span class="p">.</span><span class="nx">setDisplay</span><span class="p">();</span>
+    <span class="p">});</span>
+  <span class="p">},</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-21">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-21">&#182;</a>               </div>               <p>This method is always called. Overwrite it if you wish to do initialization
+on your custom view. DO NOT overwrite '.initialize'.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nx">extendedInitialize</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">opts</span><span class="p">)</span> <span class="p">{},</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-22">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-22">&#182;</a>               </div>               <p>This method appends the view's $el (an 'li') to the $ul of the pluginObj.
+Also, it applies the 'elCss' to the $el.
+The 'elCss' property may be set both in the pluginObj level [pluginObj.set('elCss', elCss),
+becoming a default elCss for all views, 
+and in the element level [pluginObj.addElement({id: id ,elCss: elCss}, 
+being used only at the instantiated element.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nx">basicRender</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">$ul</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">pluginObj</span><span class="p">.</span><span class="nx">els</span><span class="p">.</span><span class="nx">$ul</span><span class="p">,</span>
+      <span class="nx">elCss</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">extend</span><span class="p">({},</span> <span class="nx">defaultCss</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">getOpt</span><span class="p">(</span><span class="s1">&#39;elCss&#39;</span><span class="p">)</span> <span class="p">);</span>
+      
+    <span class="k">this</span><span class="p">.</span><span class="nx">$el</span><span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">getOpt</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)</span> <span class="p">);</span>
+    <span class="nx">$ul</span><span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">$el</span><span class="p">);</span>
+    
+    <span class="k">this</span><span class="p">.</span><span class="nx">$el</span><span class="p">.</span><span class="nx">css</span><span class="p">(</span><span class="nx">elCss</span><span class="p">);</span>
+  <span class="p">},</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-23">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-23">&#182;</a>               </div>               <p>render method is called only when the 'view-instantiated' event is triggered
+by the model. That is when all the remote requests are ready and when the 
+view has already been instantiated, so that we already have access to
+the $el and the basic rendering has been done.
+The method gets the template string and compiles it using underscore 
+templating machine. Then it renders the template purely without any data
+and calls the method '.mapFields()'</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nx">render</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">template</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">getOpt</span><span class="p">(</span><span class="s1">&#39;template&#39;</span><span class="p">),</span>
+      <span class="nx">_this</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+    
+    <span class="k">if</span> <span class="p">(</span><span class="nx">template</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">compile_template</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">template</span><span class="p">(</span><span class="nx">template</span><span class="p">);</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">$el</span><span class="p">.</span><span class="nx">html</span><span class="p">(</span> <span class="nx">compile_template</span><span class="p">()</span> <span class="p">);</span>
+    <span class="p">}</span>
+    
+    <span class="k">this</span><span class="p">.</span><span class="nx">elModel</span><span class="p">.</span><span class="nx">set</span><span class="p">({</span> <span class="s1">&#39;render-status&#39;</span><span class="o">:</span> <span class="s1">&#39;render-ready&#39;</span> <span class="p">});</span>
+  <span class="p">},</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-24">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-24">&#182;</a>               </div>               <p>The mapFields method may only be called after the view's template 
+has been rendered. 
+It receives an ARRAY containing the ids of each field in the template
+that may be 'filledIn' with data from the dataObj.
+After fetching all the $('#fieldId') elements, they are stored in the 
+'fields' hash on this view.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nx">mapFields</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">_this</span> <span class="o">=</span> <span class="k">this</span><span class="p">,</span>
+      <span class="nx">fieldIds</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">getOpt</span><span class="p">(</span><span class="s1">&#39;fillInFields&#39;</span><span class="p">);</span>
+    
+    <span class="k">if</span> <span class="p">(</span><span class="nx">fieldIds</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">this</span><span class="p">.</span><span class="nx">fields</span> <span class="o">=</span> <span class="p">{};</span>
+      
+      <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">fieldIds</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">id</span><span class="p">,</span> <span class="nx">index</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">_this</span><span class="p">.</span><span class="nx">fields</span><span class="p">[</span><span class="nx">id</span><span class="p">]</span> <span class="o">=</span> <span class="nx">_this</span><span class="p">.</span><span class="nx">$el</span><span class="p">.</span><span class="nx">find</span><span class="p">(</span><span class="s1">&#39;#&#39;</span> <span class="o">+</span> <span class="nx">id</span><span class="p">);</span>
+      <span class="p">});</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-25">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-25">&#182;</a>               </div>               <p>This method requires the fields to be already mapped. (see 'mapFields')
+Whenever the 'change:dataObj' event is fired on the model,
+this method gets the dataObj and sets the data into the corresponding 
+field, by checking the field's id.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nx">fillIn</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">data</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">elModel</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;dataObj&#39;</span><span class="p">),</span>
+      <span class="nx">_this</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+    
+    <span class="k">if</span> <span class="p">(</span><span class="nx">data</span> <span class="o">&amp;&amp;</span> <span class="nx">_this</span><span class="p">.</span><span class="nx">fields</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">data</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">value</span><span class="p">,</span> <span class="nx">hash</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">_this</span><span class="p">.</span><span class="nx">fields</span><span class="p">[</span><span class="nx">hash</span><span class="p">].</span><span class="nx">html</span><span class="p">(</span><span class="nx">value</span><span class="p">);</span>
+      <span class="p">});</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-26">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-26">&#182;</a>               </div>               <p>The setDisplay method is a core method in the transitions plugin.
+Whenever the model fires a 'change:display' event, this method is called
+to check if the View should 'show' or 'hide' itself.
+In this function, the '.setup()' and '.teardown()' methods are called.
+The .setup is run before the showing animation and the .teardown is
+run immediately after the hiding animation.</p>
+
+<p>If the view is set to be shown, then it is set to listen to two chained events:
+a 'waitFor-combo' of ['show-prep-ready','render-ready'] and a 'show-start'.
+The 'show-prep-ready' event is fired by the PLUGINOBJ when ALL pages that should
+be hidden have their 'transition-status' set as 'element-hidden'.
+The 'render-ready' event isFinite fired by the MODEL when the rendering 
+of the template is complete.
+When these two events are ready, then the waitFor combo fires the 'show-start'
+event which tells the plugin to be shown to start its showing process.</p>
+
+<p>If the view is set to be hidden, then first checks if the 'overlap' option
+is higher than 0 and lower than 1. If so, it sets a timeout (based on 
+the animation total 'duration' and the overlap multiplier) which will trigger
+the 'element-hidden' on the model.
+Then it waits for the hiding animation to be complete in order to fire the 
+'element-hidden' event.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nx">setDisplay</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">model</span><span class="p">,</span> <span class="nx">value</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">,</span>
+      <span class="nx">model</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">elModel</span><span class="p">,</span>
+      <span class="nx">displayValue</span> <span class="o">=</span> <span class="nx">model</span><span class="p">.</span><span class="nx">getOpt</span><span class="p">(</span><span class="s1">&#39;display&#39;</span><span class="p">);</span>
+    
+    <span class="k">switch</span> <span class="p">(</span><span class="nx">displayValue</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">case</span> <span class="s1">&#39;show&#39;</span><span class="o">:</span>
+        <span class="kd">var</span> <span class="nx">_this</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+        
+        <span class="k">this</span><span class="p">.</span><span class="nx">setup</span><span class="p">();</span>
+        
+        <span class="k">this</span><span class="p">.</span><span class="nx">elModel</span><span class="p">.</span><span class="nx">once</span><span class="p">(</span><span class="s1">&#39;show-start&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+          <span class="nx">$</span><span class="p">.</span><span class="nx">when</span><span class="p">(</span> <span class="nx">_this</span><span class="p">.</span><span class="nx">show</span><span class="p">()</span> <span class="p">).</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+              <span class="nx">_this</span><span class="p">.</span><span class="nx">elModel</span><span class="p">.</span><span class="nx">set</span><span class="p">({</span> <span class="s1">&#39;transition-status&#39;</span><span class="o">:</span> <span class="s1">&#39;element-exposed&#39;</span> <span class="p">});</span>
+            <span class="p">});</span>
+        <span class="p">});</span>
+        
+        <span class="nx">waitFor</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="p">{</span>
+          <span class="nx">events</span><span class="o">:</span> <span class="p">[</span>
+            <span class="p">{</span>
+              <span class="nx">emitter</span><span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">pluginObj</span><span class="p">.</span><span class="nx">events</span><span class="p">,</span> 
+              <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;show-prep-ready&#39;</span><span class="p">,</span>
+              <span class="nx">check</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="nx">_this</span><span class="p">.</span><span class="nx">pluginObj</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;transition-status&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;show-prep-ready&#39;</span><span class="p">;</span>
+              <span class="p">}</span>
+            <span class="p">},</span>
+            <span class="p">{</span>
+              <span class="nx">emitter</span><span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">elModel</span><span class="p">,</span>
+              <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;render-ready&#39;</span><span class="p">,</span>
+              <span class="nx">check</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="nx">_this</span><span class="p">.</span><span class="nx">elModel</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;render-status&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;render-ready&#39;</span><span class="p">;</span>
+              <span class="p">}</span>
+            <span class="p">},</span>
+          <span class="p">],</span>
+          <span class="nx">callback</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span> <span class="nx">_this</span><span class="p">.</span><span class="nx">elModel</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">&#39;transition-status&#39;</span><span class="p">,</span> <span class="s1">&#39;show-start&#39;</span><span class="p">);</span> <span class="p">},</span>
+          <span class="nx">context</span><span class="o">:</span> <span class="k">this</span>
+        <span class="p">});</span>
+        <span class="k">break</span><span class="p">;</span>
+        
+      <span class="k">case</span> <span class="s1">&#39;hide&#39;</span><span class="o">:</span>
+        <span class="kd">var</span> <span class="nx">overlap</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">pluginObj</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;overlap&#39;</span><span class="p">);</span>
+        
+        <span class="k">if</span> <span class="p">(</span><span class="nx">overlap</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="nx">overlap</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+          <span class="kd">var</span> <span class="nx">duration</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">getOpt</span><span class="p">(</span><span class="s1">&#39;duration&#39;</span><span class="p">),</span>
+            <span class="nx">overlapDue</span> <span class="o">=</span> <span class="nx">duration</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="nx">overlap</span><span class="p">);</span>
+            
+          <span class="nx">setTimeout</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+            <span class="nx">self</span><span class="p">.</span><span class="nx">elModel</span><span class="p">.</span><span class="nx">set</span><span class="p">({</span> <span class="s1">&#39;transition-status&#39;</span><span class="o">:</span> <span class="s1">&#39;element-hidden&#39;</span> <span class="p">});</span>
+          <span class="p">},</span> <span class="nx">overlapDue</span><span class="p">);</span>
+        <span class="p">}</span>
+        
+        <span class="nx">$</span><span class="p">.</span><span class="nx">when</span><span class="p">(</span> <span class="k">this</span><span class="p">.</span><span class="nx">hide</span><span class="p">()</span> <span class="p">).</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+          <span class="nx">self</span><span class="p">.</span><span class="nx">teardown</span><span class="p">();</span>
+          <span class="nx">self</span><span class="p">.</span><span class="nx">elModel</span><span class="p">.</span><span class="nx">set</span><span class="p">({</span> <span class="s1">&#39;transition-status&#39;</span><span class="o">:</span> <span class="s1">&#39;element-hidden&#39;</span> <span class="p">});</span>
+        <span class="p">});</span>
+        <span class="k">break</span><span class="p">;</span>
+        
+      <span class="k">default</span><span class="o">:</span></pre></div>             </td>           </tr>                               <tr id="section-27">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-27">&#182;</a>               </div>               <p>do nothing. probably it is in the initialization case</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="k">break</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-28">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-28">&#182;</a>               </div>               <p>The .show() method is called by .setDisplay method.
+It builds and returns a $.Deferred() object which is passed to the 
+transitionObj.show function. That function should resolve this deferral
+whenever it is ready (usually when animation is complete);</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nx">show</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">,</span>
+      <span class="nx">defer</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">Deferred</span><span class="p">(),</span>
+      <span class="nx">type</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">getOpt</span><span class="p">(</span><span class="s1">&#39;transitionType&#39;</span><span class="p">),</span>
+      <span class="nx">duration</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">getOpt</span><span class="p">(</span><span class="s1">&#39;duration&#39;</span><span class="p">);</span>
+      
+    <span class="k">this</span><span class="p">.</span><span class="nx">$el</span><span class="p">.</span><span class="nx">css</span><span class="p">({</span> <span class="nx">zIndex</span><span class="o">:</span> <span class="mi">1</span> <span class="p">});</span>
+    <span class="nx">transitions</span><span class="p">[</span><span class="nx">type</span><span class="p">][</span><span class="s1">&#39;show&#39;</span><span class="p">].</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">defer</span><span class="p">,</span> <span class="nx">duration</span><span class="p">);</span>
+    
+    <span class="k">return</span> <span class="nx">defer</span><span class="p">;</span>
+  <span class="p">},</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-29">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-29">&#182;</a>               </div>               <p>The .hide() method is called by .setDisplay method.
+It builds a deferral which is passed to the transitionObj.hide method.
+That function should resolve this deferral whenever the hiding animation is
+done.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nx">hide</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">,</span>
+      <span class="nx">defer</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">Deferred</span><span class="p">(),</span>
+      <span class="nx">type</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">getOpt</span><span class="p">(</span><span class="s1">&#39;transitionType&#39;</span><span class="p">),</span>
+      <span class="nx">duration</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">getOpt</span><span class="p">(</span><span class="s1">&#39;duration&#39;</span><span class="p">);</span>
+      
+    <span class="nx">self</span><span class="p">.</span><span class="nx">$el</span><span class="p">.</span><span class="nx">css</span><span class="p">({</span> <span class="nx">zIndex</span><span class="o">:</span> <span class="mi">0</span> <span class="p">});</span>
+    <span class="nx">transitions</span><span class="p">[</span><span class="nx">type</span><span class="p">][</span><span class="s1">&#39;hide&#39;</span><span class="p">].</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">defer</span><span class="p">,</span> <span class="nx">duration</span><span class="p">);</span>
+    
+    <span class="k">return</span> <span class="nx">defer</span><span class="p">;</span>
+  <span class="p">},</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-30">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-30">&#182;</a>               </div>               <p>The .getOpt() method is an alias to the elModel's getOpt method.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nx">getOpt</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">opt</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">elModel</span><span class="p">.</span><span class="nx">getOpt</span><span class="p">(</span><span class="nx">opt</span><span class="p">);</span>
+  <span class="p">},</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-31">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-31">&#182;</a>               </div>               <p>This is an no-op. The .setup() method may be overwritten
+if you wish to do anything immediately before the .show()
+method is called.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nx">setup</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{},</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-32">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-32">&#182;</a>               </div>               <p>This is an no-op. The .teardown() method may be overwritten
+if you wish to do anything AFTER the .hide() method is complete.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nx">teardown</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{},</span>
+<span class="p">});</span></pre></div>             </td>           </tr>                               <tr id="section-33">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-33">&#182;</a>               </div>               <p>The ElementModel is where all the Element-wise settings are saved.
+It is also where the 'transition-status' and 'render-status' events are saved
+and triggered.
+As about functionalities, the ElementModel is responsible for registering and 
+fetching required remote data
+All</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Constructors</span><span class="p">.</span><span class="nx">ElementModel</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Model</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+  <span class="nx">defaults</span><span class="o">:</span> <span class="p">{</span>
+    <span class="nx">display</span><span class="o">:</span> <span class="s1">&#39;not-initialized&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;render-status&#39;</span><span class="o">:</span> <span class="s1">&#39;not-initialized&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;transition-status&#39;</span><span class="o">:</span> <span class="s1">&#39;not-initialized&#39;</span>
+    
+    <span class="cm">/*</span>
+<span class="cm">      render-status events: (uni-directional)</span>
+<span class="cm">        - not-initialized,</span>
+<span class="cm">        - remote-loading,</span>
+<span class="cm">        - remote-ready</span>
+<span class="cm">        - render-ready</span>
+<span class="cm">    </span>
+<span class="cm">      transition-status events: (circular)</span>
+<span class="cm">        - not-initialized</span>
+<span class="cm">      </span>
+<span class="cm">        circular:</span>
+<span class="cm">        - element-hidden,</span>
+<span class="cm">        - show-prepared,</span>
+<span class="cm">        - show-start,</span>
+<span class="cm">        - element-exposed,</span>
+<span class="cm">        - hide-start</span>
+<span class="cm">    */</span>
+  <span class="p">},</span>
+  
+  <span class="nx">initialize</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">opts</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">_</span><span class="p">.</span><span class="nx">bindAll</span><span class="p">(</span><span class="k">this</span><span class="p">);</span>
+    
+    <span class="kd">var</span> <span class="nx">_this</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>     
+    
+    <span class="k">this</span><span class="p">.</span><span class="nx">elCollection</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;elCollection&#39;</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="k">this</span><span class="p">.</span><span class="nx">elCollection</span> <span class="o">!==</span> <span class="s1">&#39;object&#39;</span><span class="p">)</span> <span class="p">{</span> <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="s1">&#39;This model hasn\&#39;t been given a elCollection&#39;</span><span class="p">);</span> <span class="p">}</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">pluginObj</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">elCollection</span><span class="p">.</span><span class="nx">pluginObj</span><span class="p">;</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-34">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-34">&#182;</a>               </div>               <p>proxy all this model's events to the pluginObj</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="k">this</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">event</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">_this</span><span class="p">.</span><span class="nx">pluginObj</span><span class="p">.</span><span class="nx">events</span><span class="p">.</span><span class="nx">trigger</span><span class="p">(</span><span class="nx">event</span><span class="p">,</span> <span class="nx">_this</span><span class="p">);</span>
+    <span class="p">});</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-35">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-35">&#182;</a>               </div>               <p>all changes on the 'remote-status' should be 
+fired by the eventedSetting</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="k">this</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;change:render-status&#39;</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">eventedSetting</span><span class="p">);</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-36">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-36">&#182;</a>               </div>               <p>all changes on the 'transition-status' should be 
+fired by 'eventedSetting'</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="k">this</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;change:transition-status&#39;</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">eventedSetting</span><span class="p">);</span>
+    
+    </pre></div>             </td>           </tr>                               <tr id="section-37">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-37">&#182;</a>               </div>               <p>set the view to be instantiated only when the 
+'remote-ready' event is fired</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="k">this</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;remote-ready&#39;</span><span class="p">,</span> <span class="k">this</span><span class="p">.</span><span class="nx">setView</span><span class="p">);</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-38">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-38">&#182;</a>               </div>               <p>load all dependencies (if any)</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="k">this</span><span class="p">.</span><span class="nx">loadDependencies</span><span class="p">();</span>
+  <span class="p">},</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-39">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-39">&#182;</a>               </div>               <p>.eventedSetting handles 'change:key' events by triggering a event the same
+name as the value to which the key was changed to.
+If you register any 'change:key' event to be handled by this method,
+whenever that key is changed on the model, the model itself will trigger a event
+with the same name as the new value of the eventedKey.
+This concept is extremely useful when you need to listen to events AND save 
+states, as augments the action of setting a key value into a event.
+NEED FURTHER CLEARER EXPLANANTION.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nx">eventedSetting</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">model</span><span class="p">,</span> <span class="nx">value</span><span class="p">,</span> <span class="nx">options</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">trigger</span><span class="p">(</span><span class="nx">value</span><span class="p">,</span> <span class="k">this</span><span class="p">);</span>
+  <span class="p">},</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-40">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-40">&#182;</a>               </div>               <p>.loadDependencies() method builds an $.Deferred object that is returned
+and resolved whenever the required dependencies are ready.
+In order to use it, you need to set the 'dependencies' key on the model
+with an array of dependency objects, which contain the following properties:
+dep:
+    - name,
+    - url,
+    - type,             -> 'template', 'view-constructor'
+    - requireSuccess    -> function to deal with require response.</p>
+
+<p>If you specify in the dependency obj that it is either 'template' 
+or 'view-constructor' dep, the requireSuccess is not necessary, as the plugin 
+deals with the response itself. Otherwise, you must provide a requireSuccess, which
+will be passed an object with the required module object.</p>
+
+<p>For each dependency in the 'dependencies' property of the model,
+the function builds an $.Deferred() object which is to be resolved
+after the required module is ready and the module has already been processed
+by the requireSuccess. This first part is done using the requireDefer() function (see Utils)</p>
+
+<p>When all requireDefers are resolved, the method fires the event 'remote-ready' on the model.</p>
+
+<p>TEMPLATE loading:
+If the dependency is a 'template', the method uses the text! plugin to do the loading
+and saves the response directly to the model's template attr.</p>
+
+<p>VIEW-CONSTRUCTOR loading:
+If the dependency is a 'view-constructor', the method loads the module using basic
+require and saves the response directly to the model's view-constructor attribute.</p>
+
+<p>CUSTOM MODULE loading:
+If no type is specified on the dependency, the method loads the module using basic
+require and applies the dep.requireSuccess function using the model's context and 
+received arguments.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nx">loadDependencies</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">id</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;templateId&#39;</span><span class="p">)</span> <span class="o">||</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">),</span>
+      <span class="nx">_this</span> <span class="o">=</span> <span class="k">this</span><span class="p">,</span>
+      <span class="nx">dependencies</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">getOpt</span><span class="p">(</span><span class="s1">&#39;dependencies&#39;</span><span class="p">),</span>
+      <span class="nx">deferrals</span> <span class="o">=</span> <span class="p">[];</span>
+      
+    <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">dependencies</span> <span class="o">===</span> <span class="s1">&#39;undefined&#39;</span> <span class="o">||</span> <span class="nx">dependencies</span><span class="p">.</span><span class="nx">length</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">deferrals</span> <span class="o">=</span> <span class="p">[</span><span class="kc">true</span><span class="p">];</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      
+      <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">dependencies</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">dep</span><span class="p">,</span> <span class="nx">index</span><span class="p">)</span> <span class="p">{</span>
+          
+        <span class="k">if</span> <span class="p">(</span><span class="nx">dep</span><span class="p">.</span><span class="nx">type</span> <span class="o">==</span> <span class="s1">&#39;template&#39;</span><span class="p">)</span> <span class="p">{</span>
+          <span class="kd">var</span> <span class="nx">def</span> <span class="o">=</span> <span class="nx">requireDefer</span><span class="p">(</span><span class="s1">&#39;text!&#39;</span> <span class="o">+</span> <span class="nx">dep</span><span class="p">.</span><span class="nx">url</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">temp</span><span class="p">)</span> <span class="p">{</span>
+              <span class="nx">_this</span><span class="p">.</span><span class="nx">set</span><span class="p">({</span> <span class="nx">template</span><span class="o">:</span> <span class="nx">temp</span> <span class="p">});</span>
+            <span class="p">});</span>
+          
+          <span class="nx">deferrals</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">def</span><span class="p">);</span>
+          
+        <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">dep</span><span class="p">.</span><span class="nx">type</span> <span class="o">==</span> <span class="s1">&#39;view-constructor&#39;</span><span class="p">)</span> <span class="p">{</span>
+          <span class="kd">var</span> <span class="nx">def</span> <span class="o">=</span> <span class="nx">requireDefer</span><span class="p">(</span><span class="nx">dep</span><span class="p">.</span><span class="nx">url</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">view</span><span class="p">)</span> <span class="p">{</span>
+              <span class="nx">_this</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">&#39;view-constructor&#39;</span><span class="p">,</span> <span class="nx">view</span><span class="p">);</span>
+            <span class="p">});</span>
+          
+          <span class="nx">deferrals</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">def</span><span class="p">);</span>
+          
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+          
+          <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">dep</span><span class="p">.</span><span class="nx">requireSuccess</span> <span class="o">!==</span> <span class="s1">&#39;function&#39;</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="s1">&#39;The dependecy object &#39;</span> <span class="o">+</span> <span class="nx">dep</span><span class="p">.</span><span class="nx">name</span> <span class="o">+</span> <span class="s1">&#39; did not provide a \&#39;requireSuccess\&#39; function. Either provide that, or set the dependency \&#39;type\&#39;&#39;</span><span class="p">);</span>
+          <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="kd">var</span> <span class="nx">def</span> <span class="o">=</span> <span class="nx">requireDefer</span><span class="p">(</span><span class="nx">dep</span><span class="p">.</span><span class="nx">url</span><span class="p">,</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+                <span class="nx">dep</span><span class="p">.</span><span class="nx">requireSuccess</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="nx">_this</span><span class="p">,</span> <span class="nx">arguments</span><span class="p">);</span>
+              <span class="p">});</span>
+            
+            <span class="nx">deferrals</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">def</span><span class="p">);</span>
+          <span class="p">}</span>
+        <span class="p">}</span>
+      <span class="p">});</span> <span class="c1">// close _.each</span>
+    <span class="p">}</span> <span class="c1">// close if else</span>
+      
+    <span class="nx">$</span><span class="p">.</span><span class="nx">when</span><span class="p">.</span><span class="nx">apply</span><span class="p">(</span><span class="nx">_this</span><span class="p">,</span> <span class="nx">deferrals</span><span class="p">)</span>
+      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nx">_this</span><span class="p">.</span><span class="nx">set</span><span class="p">({</span> <span class="s1">&#39;render-status&#39;</span><span class="o">:</span> <span class="s1">&#39;remote-ready&#39;</span> <span class="p">});</span>
+      <span class="p">});</span>
+  <span class="p">},</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-41">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-41">&#182;</a>               </div>               <p>.setView() method instantiates the view of the element.
+It waits for the 'render-status' == 'remote-ready' event to be fired 
+(which is done by the .loadDependencies method);
+After the view is instantiated it fires the 'render-status' == 'view-instantiated'
+event.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nx">setView</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">_this</span> <span class="o">=</span> <span class="k">this</span><span class="p">,</span>
+      <span class="nx">constructor</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">getOpt</span><span class="p">(</span><span class="s1">&#39;view-constructor&#39;</span><span class="p">),</span>
+      <span class="nx">view</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">constructor</span><span class="p">({</span>
+        <span class="nx">elModel</span><span class="o">:</span> <span class="nx">_this</span><span class="p">,</span> 
+        <span class="nx">elCollection</span><span class="o">:</span> <span class="nx">_this</span><span class="p">.</span><span class="nx">elCollection</span><span class="p">,</span>
+        <span class="nx">pluginObj</span><span class="o">:</span> <span class="nx">_this</span><span class="p">.</span><span class="nx">pluginObj</span>
+      <span class="p">});</span>
+    
+    <span class="k">this</span><span class="p">.</span><span class="nx">set</span><span class="p">({</span>
+      <span class="nx">view</span><span class="o">:</span> <span class="nx">view</span><span class="p">,</span>
+      <span class="s1">&#39;render-status&#39;</span><span class="o">:</span> <span class="s1">&#39;view-instantiated&#39;</span>
+    <span class="p">});</span> 
+  <span class="p">},</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-42">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-42">&#182;</a>               </div>               <p>.getOpt() method tries to get the attribute in this model and
+if it is not successful, it gets the same option on the pluginObj 
+where the default and global settings are stored.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nx">getOpt</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">opt</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">opt</span><span class="p">)</span> <span class="o">||</span> <span class="k">this</span><span class="p">.</span><span class="nx">pluginObj</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">opt</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">});</span></pre></div>             </td>           </tr>                               <tr id="section-43">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-43">&#182;</a>               </div>               <p>ElementCollection does not actually do many things.
+It is basically a way of keeping Elements in order.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Constructors</span><span class="p">.</span><span class="nx">ElementCollection</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Collection</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+  <span class="nx">model</span><span class="o">:</span> <span class="nx">Constructors</span><span class="p">.</span><span class="nx">ElementModel</span><span class="p">,</span>
+  
+  <span class="nx">initialize</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">models</span><span class="p">,</span> <span class="nx">opts</span><span class="p">)</span> <span class="p">{</span>
+    
+    <span class="k">this</span><span class="p">.</span><span class="nx">opts</span> <span class="o">=</span> <span class="nx">opts</span><span class="p">;</span>
+    
+    <span class="k">this</span><span class="p">.</span><span class="nx">pluginObj</span> <span class="o">=</span> <span class="nx">opts</span><span class="p">.</span><span class="nx">pluginObj</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">});</span></pre></div>             </td>           </tr>                               <tr id="section-44">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-44">&#182;</a>               </div>               <p>Router is the default Router constructor of the element.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Constructors</span><span class="p">.</span><span class="nx">Router</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Router</span><span class="p">;</span></pre></div>             </td>           </tr>                               <tr id="section-45">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-45">&#182;</a>               </div>               <p>Plugin default GLOBAL configurations</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="kd">var</span> <span class="nx">pluginName</span> <span class="o">=</span> <span class="s1">&#39;jtrans&#39;</span><span class="p">,</span>
+  <span class="nx">pluginDefaults</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">overlap</span><span class="o">:</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="nx">transitionType</span><span class="o">:</span> <span class="s1">&#39;fade&#39;</span><span class="p">,</span>
+    <span class="nx">duration</span><span class="o">:</span> <span class="mi">500</span><span class="p">,</span>
+    <span class="nx">remote</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+    <span class="nx">templateUrl</span><span class="o">:</span> <span class="kc">undefined</span><span class="p">,</span>
+    <span class="nx">template</span><span class="o">:</span> <span class="s1">&#39;&lt;div id=&quot;replace-with-yours&quot;&gt;You should place your template here&lt;/div&gt;&#39;</span><span class="p">,</span>
+    <span class="nx">viewUrl</span><span class="o">:</span> <span class="kc">undefined</span><span class="p">,</span>
+    <span class="nx">dependencies</span><span class="o">:</span> <span class="p">[],</span>
+    <span class="s1">&#39;view-constructor&#39;</span><span class="o">:</span> <span class="nx">Constructors</span><span class="p">.</span><span class="nx">ElementView</span><span class="p">,</span>
+    <span class="nx">initializeTo</span><span class="o">:</span> <span class="kc">undefined</span><span class="p">,</span>
+    
+    <span class="s1">&#39;transition-status&#39;</span><span class="o">:</span> <span class="s1">&#39;element-hidden&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;render-status&#39;</span><span class="o">:</span> <span class="s1">&#39;not-initialized&#39;</span>
+  <span class="p">};</span>  </pre></div>             </td>           </tr>                               <tr id="section-46">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-46">&#182;</a>               </div>               <p>Plugin is the constructor of the object to be stored in $.data(element, 'jtrans')
+It's got all the public mehtods, helper methods and does the plugin initial setup.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="kd">function</span> <span class="nx">Plugin</span><span class="p">(</span><span class="nx">element</span><span class="p">,</span> <span class="nx">options</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">_this</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+  
+  <span class="k">this</span><span class="p">.</span><span class="nx">_defaults</span> <span class="o">=</span> <span class="nx">pluginDefaults</span><span class="p">;</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">_pluginName</span> <span class="o">=</span> <span class="nx">pluginName</span><span class="p">;</span>
+  
+  <span class="k">this</span><span class="p">.</span><span class="nx">options</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">extend</span><span class="p">(</span> <span class="p">{},</span> <span class="nx">pluginDefaults</span><span class="p">,</span> <span class="nx">options</span> <span class="p">);</span>
+  
+  <span class="k">this</span><span class="p">.</span><span class="nx">els</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="nx">frame</span><span class="o">:</span> <span class="nx">element</span><span class="p">,</span>
+    <span class="nx">$frame</span><span class="o">:</span> <span class="nx">$</span><span class="p">(</span><span class="nx">element</span><span class="p">)</span>
+  <span class="p">}</span>
+  
+  <span class="k">this</span><span class="p">.</span><span class="nx">events</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">extend</span><span class="p">({},</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">Events</span><span class="p">);</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-47">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-47">&#182;</a>               </div>               <p>as all models' events are being proxied to this object
+we may listen to 'change:transition-status' and 'change:render-status'
+on this object</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="k">this</span><span class="p">.</span><span class="nx">events</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;change:render-status&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">model</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">_this</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">&#39;render-status&#39;</span><span class="p">,</span> <span class="nx">model</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;render-status&#39;</span><span class="p">)</span> <span class="p">);</span>
+  <span class="p">});</span>
+  
+  <span class="k">this</span><span class="p">.</span><span class="nx">events</span><span class="p">.</span><span class="nx">on</span><span class="p">(</span><span class="s1">&#39;change:transition-status&#39;</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">model</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nx">_this</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">&#39;transition-status&#39;</span><span class="p">,</span> <span class="nx">model</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;transition-status&#39;</span><span class="p">)</span> <span class="p">);</span>
+  <span class="p">});</span>
+  
+  <span class="k">this</span><span class="p">.</span><span class="nx">setFraming</span><span class="p">();</span>
+  
+  <span class="k">this</span><span class="p">.</span><span class="nx">elCollection</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Constructors</span><span class="p">.</span><span class="nx">ElementCollection</span><span class="p">([],</span> <span class="p">{</span> <span class="nx">pluginObj</span><span class="o">:</span> <span class="k">this</span> <span class="p">});</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">Router</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">Constructors</span><span class="p">.</span><span class="nx">Router</span><span class="p">();</span>
+<span class="p">}</span></pre></div>             </td>           </tr>                               <tr id="section-48">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-48">&#182;</a>               </div>               <p>.setFraming method builds up the 'ul' list to which all elements' html will be 
+attached.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Plugin</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">setFraming</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">els</span><span class="p">.</span><span class="nx">frame</span><span class="p">.</span><span class="nx">tagName</span> <span class="o">!=</span> <span class="s1">&#39;DIV&#39;</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="s1">&#39;The element passed is not a DIV&#39;</span><span class="p">);</span>
+  <span class="p">}</span>
+  
+  <span class="k">this</span><span class="p">.</span><span class="nx">els</span><span class="p">.</span><span class="nx">$frame</span><span class="p">.</span><span class="nx">css</span><span class="p">({</span>
+    <span class="nx">position</span><span class="o">:</span> <span class="s1">&#39;relative&#39;</span><span class="p">,</span>
+    <span class="nx">overflow</span><span class="o">:</span> <span class="s1">&#39;hidden&#39;</span>
+  <span class="p">});</span>
+  
+  <span class="kd">var</span> <span class="nx">$ul</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="s1">&#39;&lt;ul&gt;&lt;/ul&gt;&#39;</span><span class="p">).</span><span class="nx">appendTo</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">els</span><span class="p">.</span><span class="nx">$frame</span><span class="p">)</span>
+    <span class="p">.</span><span class="nx">css</span><span class="p">({</span>
+      <span class="nx">position</span><span class="o">:</span> <span class="s1">&#39;relative&#39;</span><span class="p">,</span>
+      <span class="nx">top</span><span class="o">:</span> <span class="s1">&#39;0px&#39;</span><span class="p">,</span>
+      <span class="nx">left</span><span class="o">:</span> <span class="s1">&#39;0px&#39;</span><span class="p">,</span>
+      
+      <span class="nx">width</span><span class="o">:</span> <span class="s1">&#39;100%&#39;</span><span class="p">,</span>
+      <span class="nx">height</span><span class="o">:</span> <span class="s1">&#39;100%&#39;</span><span class="p">,</span>
+      
+      <span class="nx">padding</span><span class="o">:</span> <span class="s1">&#39;0 0 0 0&#39;</span><span class="p">,</span>
+      <span class="nx">margin</span><span class="o">:</span> <span class="s1">&#39;0 0 0 0&#39;</span>
+    <span class="p">});</span>
+    
+  <span class="k">this</span><span class="p">.</span><span class="nx">els</span><span class="p">.</span><span class="nx">$ul</span> <span class="o">=</span> <span class="nx">$ul</span><span class="p">;</span>
+  <span class="k">this</span><span class="p">.</span><span class="nx">els</span><span class="p">.</span><span class="nx">ul</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">els</span><span class="p">.</span><span class="nx">$ul</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+<span class="p">}</span></pre></div>             </td>           </tr>                               <tr id="section-49">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-49">&#182;</a>               </div>               <p>Remove the plugin.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Plugin</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">remove</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+  <span class="nx">$</span><span class="p">.</span><span class="nx">removeData</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">els</span><span class="p">.</span><span class="nx">frame</span><span class="p">,</span> <span class="nx">pluginName</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nx">Plugin</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">set</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">opt</span><span class="p">,</span> <span class="nx">val</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">switch</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">opt</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">case</span> <span class="s1">&#39;object&#39;</span><span class="o">:</span>
+      <span class="k">for</span> <span class="p">(</span><span class="nx">option</span> <span class="k">in</span> <span class="nx">opt</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span> <span class="nx">opt</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">option</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+          
+          <span class="k">this</span><span class="p">.</span><span class="nx">options</span><span class="p">[</span><span class="nx">option</span><span class="p">]</span> <span class="o">=</span> <span class="nx">opt</span><span class="p">[</span><span class="nx">option</span><span class="p">];</span>             
+        <span class="p">}</span>
+      <span class="p">}</span>
+      <span class="k">break</span><span class="p">;</span>
+    <span class="k">case</span> <span class="s1">&#39;string&#39;</span><span class="o">:</span>
+        <span class="k">this</span><span class="p">.</span><span class="nx">options</span><span class="p">[</span><span class="nx">opt</span><span class="p">]</span> <span class="o">=</span> <span class="nx">val</span><span class="p">;</span>
+      <span class="k">break</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nx">Plugin</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">get</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">opt</span><span class="p">,</span> <span class="nx">deep</span><span class="p">)</span> <span class="p">{</span>
+  
+  <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">deep</span> <span class="o">==</span> <span class="s1">&#39;undefined&#39;</span><span class="p">)</span> <span class="p">{</span></pre></div>             </td>           </tr>                               <tr id="section-50">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-50">&#182;</a>               </div>               <p>gets an option of the plugin</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">options</span><span class="p">[</span><span class="nx">opt</span><span class="p">];</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">opt</span> <span class="o">==</span> <span class="s1">&#39;element&#39;</span><span class="p">)</span> <span class="p">{</span></pre></div>             </td>           </tr>                               <tr id="section-51">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-51">&#182;</a>               </div>               <p>gets an element model</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">elCollection</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">deep</span><span class="p">);</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">opt</span> <span class="o">==</span> <span class="s1">&#39;prop&#39;</span><span class="p">)</span> <span class="p">{</span></pre></div>             </td>           </tr>                               <tr id="section-52">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-52">&#182;</a>               </div>               <p>directly gets a prop from this obj</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="k">return</span> <span class="k">this</span><span class="p">[</span><span class="nx">deep</span><span class="p">];</span>
+  <span class="p">}</span>
+<span class="p">}</span></pre></div>             </td>           </tr>                               <tr id="section-53">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-53">&#182;</a>               </div>               <p>To register a transition, you must pass a transition object
+It is composed of:
+ transition:
+    - show,
+    - hide,</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Plugin</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">registerTransition</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">name_or_transitions</span><span class="p">,</span> <span class="nx">obj</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">name_or_transitions</span> <span class="o">===</span> <span class="s1">&#39;string&#39;</span><span class="p">)</span> <span class="p">{</span>
+    
+    <span class="nx">validateTransition</span><span class="p">(</span><span class="nx">name_or_transitions</span><span class="p">,</span> <span class="nx">obj</span><span class="p">);</span>
+    
+    <span class="nx">transitions</span><span class="p">[</span><span class="nx">name_or_transitions</span><span class="p">]</span> <span class="o">=</span> <span class="nx">obj</span><span class="p">;</span>
+    
+  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span> <span class="nx">name_or_transitions</span> <span class="o">===</span> <span class="s1">&#39;object&#39;</span><span class="p">)</span> <span class="p">{</span>
+    
+    <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">name_or_transitions</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">trans</span><span class="p">,</span> <span class="nx">index</span><span class="p">)</span> <span class="p">{</span>
+      
+      <span class="nx">validateTransition</span><span class="p">(</span><span class="nx">trans</span><span class="p">,</span> <span class="nx">index</span><span class="p">);</span>
+      
+      <span class="nx">transitions</span><span class="p">[</span><span class="nx">index</span><span class="p">]</span> <span class="o">=</span> <span class="nx">trans</span><span class="p">;</span>
+    <span class="p">});</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+<span class="p">}</span></pre></div>             </td>           </tr>                               <tr id="section-54">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-54">&#182;</a>               </div>               <p>To add a element to the transition plugin, you should create a 
+elementOptions object, which shall contain:
+        - id,
+    - transitionType,
+    - duration,
+    - template,
+    - dependencies: [
+            {
+                - name,
+                - url,
+                - type,
+                - requireSuccess
+            }
+        ]
+    - dataObj,
+    - view-constructor,
+    - fillInFields
+    - elCss
+    - route
+    - routeParamMap: ['var','var2']</p>
+
+<p>If a route is provided in the elementOptions object, 
+the method will call addRoute as well.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Plugin</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">addElement</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">info</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">elInfo</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">extend</span><span class="p">({},</span> <span class="p">{</span> <span class="nx">pluginObj</span><span class="o">:</span> <span class="k">this</span><span class="p">,</span> <span class="nx">elCollection</span><span class="o">:</span> <span class="k">this</span><span class="p">.</span><span class="nx">elCollection</span> <span class="p">},</span> <span class="nx">info</span><span class="p">),</span>
+    <span class="nx">route</span> <span class="o">=</span> <span class="nx">info</span><span class="p">.</span><span class="nx">route</span><span class="p">;</span>
+    
+  <span class="k">if</span> <span class="p">(</span><span class="nx">route</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">this</span><span class="p">.</span><span class="nx">addRoute</span><span class="p">({</span>
+      <span class="nx">route</span><span class="o">:</span> <span class="nx">route</span><span class="p">,</span> 
+      <span class="nx">name</span><span class="o">:</span> <span class="nx">info</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span> 
+      <span class="nx">elementIds</span><span class="o">:</span> <span class="nx">info</span><span class="p">.</span><span class="nx">id</span><span class="p">,</span> 
+      <span class="nx">paramMap</span><span class="o">:</span> <span class="nx">info</span><span class="p">.</span><span class="nx">routeParamMap</span>
+    <span class="p">});</span>
+  <span class="p">}</span>
+  
+  <span class="k">this</span><span class="p">.</span><span class="nx">elCollection</span><span class="p">.</span><span class="nx">add</span><span class="p">(</span><span class="nx">elInfo</span><span class="p">);</span>
+  <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+<span class="p">}</span></pre></div>             </td>           </tr>                               <tr id="section-55">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-55">&#182;</a>               </div>               <p>The display mehtod accepts both string value and array of strings
+in the id<em>or</em>ids field. It also sets dataObj of the elements. The dataObj
+var could also be only one dataObj or an array of dataObjs. If dataObj is an
+array, then the function will try to match the index of the two arrays 
+(ids and dataObjects) so that the correct chunk of data is passed to the correct
+elements.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Plugin</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">display</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">id_or_ids</span><span class="p">,</span> <span class="nx">dataObj</span><span class="p">)</span> <span class="p">{</span>
+  
+  <span class="kd">var</span> <span class="nx">self</span> <span class="o">=</span> <span class="k">this</span><span class="p">,</span>
+    <span class="nx">elements_to_hide</span> <span class="o">=</span> <span class="p">[];</span>
+    
+  <span class="nx">arrStr</span><span class="p">({</span>
+    <span class="nx">context</span><span class="o">:</span> <span class="nx">self</span><span class="p">,</span>
+    <span class="nx">obj</span><span class="o">:</span> <span class="nx">id_or_ids</span><span class="p">,</span>
+    <span class="nx">funcs</span><span class="o">:</span> <span class="p">{</span>
+      <span class="nx">str</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">val</span><span class="p">)</span> <span class="p">{</span>
+        
+        <span class="k">this</span><span class="p">.</span><span class="nx">elCollection</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span> <span class="kd">function</span><span class="p">(</span><span class="nx">model</span><span class="p">,</span> <span class="nx">index</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">if</span> <span class="p">(</span><span class="nx">model</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)</span> <span class="o">!==</span> <span class="nx">val</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">elements_to_hide</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">model</span><span class="p">);</span>
+            <span class="nx">model</span><span class="p">.</span><span class="nx">set</span><span class="p">({</span> <span class="nx">display</span><span class="o">:</span> <span class="s1">&#39;hide&#39;</span> <span class="p">});</span>
+          <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="nx">model</span><span class="p">.</span><span class="nx">set</span><span class="p">({</span> <span class="nx">display</span><span class="o">:</span> <span class="s1">&#39;show&#39;</span><span class="p">,</span> <span class="nx">dataObj</span><span class="o">:</span> <span class="nx">dataObj</span> <span class="p">});</span>
+          <span class="p">}</span>
+        <span class="p">});</span>
+      <span class="p">},</span>
+      <span class="nx">arr</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">array</span><span class="p">)</span> <span class="p">{</span>
+        
+        <span class="k">this</span><span class="p">.</span><span class="nx">elCollection</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span> <span class="kd">function</span><span class="p">(</span><span class="nx">model</span><span class="p">,</span> <span class="nx">index</span><span class="p">)</span> <span class="p">{</span>
+          <span class="kd">var</span> <span class="nx">id</span> <span class="o">=</span> <span class="nx">model</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">);</span>
+          
+          <span class="k">if</span> <span class="p">(</span> <span class="nx">_</span><span class="p">.</span><span class="nx">indexOf</span><span class="p">(</span><span class="nx">array</span><span class="p">,</span> <span class="nx">id</span><span class="p">)</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="p">)</span> <span class="p">{</span>
+            <span class="nx">elements_to_hide</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">model</span><span class="p">);</span>
+            <span class="nx">model</span><span class="p">.</span><span class="nx">set</span><span class="p">({</span> <span class="nx">display</span><span class="o">:</span> <span class="s1">&#39;hide&#39;</span> <span class="p">});</span>
+          <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="nx">model</span><span class="p">.</span><span class="nx">set</span><span class="p">({</span> <span class="nx">display</span><span class="o">:</span> <span class="s1">&#39;show&#39;</span><span class="p">,</span> <span class="nx">dataObj</span><span class="o">:</span> <span class="nx">dataObj</span> <span class="p">});</span>
+          <span class="p">}</span>
+        <span class="p">});</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">});</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-56">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-56">&#182;</a>               </div>               <p>check for the hiding elements</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="k">this</span><span class="p">.</span><span class="nx">checkHideStatus</span><span class="p">(</span><span class="nx">elements_to_hide</span><span class="p">);</span>
+  
+  <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+<span class="p">},</span></pre></div>             </td>           </tr>                               <tr id="section-57">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-57">&#182;</a>               </div>               <p>needs to be passed a </p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Plugin</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">checkHideStatus</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">elements_to_hide</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">events</span> <span class="o">=</span> <span class="p">[],</span>
+    <span class="nx">_this</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+    
+  <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">elements_to_hide</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">elModel</span><span class="p">,</span> <span class="nx">index</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">e</span> <span class="o">=</span> <span class="p">{</span>
+      <span class="nx">emitter</span><span class="o">:</span> <span class="nx">elModel</span><span class="p">,</span>
+      <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;element-hidden&#39;</span><span class="p">,</span>
+      <span class="nx">check</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>         
+        <span class="k">return</span> <span class="nx">elModel</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">&#39;transition-status&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;element-hidden&#39;</span><span class="p">;</span>
+      <span class="p">}</span>
+    <span class="p">};</span>
+    
+    <span class="nx">events</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">e</span><span class="p">);</span>
+  <span class="p">});</span>
+  
+  <span class="nx">waitFor</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">_this</span><span class="p">,</span> <span class="p">{</span>
+    <span class="nx">name</span><span class="o">:</span> <span class="s1">&#39;first event&#39;</span><span class="p">,</span>
+    <span class="nx">events</span><span class="o">:</span> <span class="nx">events</span><span class="p">,</span>
+    <span class="nx">callback</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+      </pre></div>             </td>           </tr>                               <tr id="section-58">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-58">&#182;</a>               </div>               <p>save the status</p>             </td>             <td class="code">               <div class="highlight"><pre>      <span class="nx">_this</span><span class="p">.</span><span class="nx">set</span><span class="p">(</span><span class="s1">&#39;transition-status&#39;</span><span class="p">,</span> <span class="s1">&#39;show-prep-ready&#39;</span><span class="p">);</span>
+      </pre></div>             </td>           </tr>                               <tr id="section-59">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-59">&#182;</a>               </div>               <p>trigger the event</p>             </td>             <td class="code">               <div class="highlight"><pre>      <span class="nx">_this</span><span class="p">.</span><span class="nx">events</span><span class="p">.</span><span class="nx">trigger</span><span class="p">(</span><span class="s1">&#39;show-prep-ready&#39;</span><span class="p">);</span>
+    <span class="p">},</span>
+    <span class="nx">context</span><span class="o">:</span> <span class="nx">_this</span>
+  <span class="p">});</span>
+<span class="p">},</span></pre></div>             </td>           </tr>                               <tr id="section-60">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-60">&#182;</a>               </div>               <p>This function accepts:
+ o:
+    - route,
+    - name,
+    - elementIds,
+    - paramMap</p>
+
+<p>If you pass in a paramMap array, the parameters passed by the route will be 
+identified and then directly build a dataObj to be set on the models.
+If you do not pass a paramMap, the values won't be usable.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Plugin</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">addRoute</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">o</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kd">var</span> <span class="nx">_this</span> <span class="o">=</span> <span class="k">this</span><span class="p">,</span>
+    <span class="nx">callback</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">dataObj</span><span class="p">,</span> 
+        <span class="nx">args</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">toArray</span><span class="p">(</span><span class="nx">arguments</span><span class="p">);</span>
+      
+      <span class="k">if</span> <span class="p">(</span><span class="nx">o</span><span class="p">.</span><span class="nx">paramMap</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">dataObj</span> <span class="o">=</span> <span class="p">{};</span>
+        
+        <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">o</span><span class="p">.</span><span class="nx">paramMap</span><span class="p">,</span> <span class="kd">function</span><span class="p">(</span><span class="nx">dataName</span><span class="p">,</span> <span class="nx">index</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">dataObj</span><span class="p">[</span><span class="nx">dataName</span><span class="p">]</span> <span class="o">=</span> <span class="nx">args</span><span class="p">[</span><span class="nx">index</span><span class="p">];</span>
+        <span class="p">});</span>
+      <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="nx">dataObj</span> <span class="o">=</span> <span class="nx">args</span><span class="p">;</span>
+      <span class="p">}</span>
+      
+      <span class="nx">_this</span><span class="p">.</span><span class="nx">display</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">_this</span><span class="p">,</span> <span class="nx">o</span><span class="p">.</span><span class="nx">elementIds</span><span class="p">,</span> <span class="nx">dataObj</span><span class="p">);</span>
+    <span class="p">};</span>
+  
+  <span class="k">this</span><span class="p">.</span><span class="nx">Router</span><span class="p">.</span><span class="nx">route</span><span class="p">(</span><span class="nx">o</span><span class="p">.</span><span class="nx">route</span><span class="p">,</span> <span class="nx">o</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span> <span class="nx">callback</span><span class="p">);</span>
+<span class="p">};</span></pre></div>             </td>           </tr>                               <tr id="section-61">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-61">&#182;</a>               </div>               <p>Direct access to the router's navigate function</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Plugin</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">navigate</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">route</span><span class="p">,</span> <span class="nx">options</span><span class="p">)</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">Router</span><span class="p">.</span><span class="nx">navigate</span><span class="p">(</span><span class="nx">route</span><span class="p">,</span> <span class="nx">options</span><span class="p">);</span>
+<span class="p">}</span></pre></div>             </td>           </tr>                               <tr id="section-62">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-62">&#182;</a>               </div>               <p>Direct access to backbone mocels, collections and views</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Plugin</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">Constructors</span> <span class="o">=</span> <span class="nx">Constructors</span><span class="p">;</span></pre></div>             </td>           </tr>                               <tr id="section-63">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-63">&#182;</a>               </div>               <p>Direct access to Utils</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">Plugin</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">Utils</span> <span class="o">=</span> <span class="nx">Utils</span><span class="p">;</span></pre></div>             </td>           </tr>                               <tr id="section-64">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-64">&#182;</a>               </div>               <p>The jquery plugin wrapper.</p>             </td>             <td class="code">               <div class="highlight"><pre><span class="nx">$</span><span class="p">.</span><span class="nx">fn</span><span class="p">[</span><span class="nx">pluginName</span><span class="p">]</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span> <span class="nx">method_or_options</span> <span class="p">)</span> <span class="p">{</span>     
+  
+  <span class="kd">var</span> <span class="nx">args</span> <span class="o">=</span> <span class="nb">Array</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">slice</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="nx">arguments</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>
+  
+  <span class="k">if</span> <span class="p">(</span> <span class="k">typeof</span> <span class="nx">method_or_options</span> <span class="o">===</span> <span class="s1">&#39;object&#39;</span> <span class="o">||</span> <span class="o">!</span><span class="nx">method_or_options</span> <span class="p">)</span> <span class="p">{</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-65">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-65">&#182;</a>               </div>               <p>run initialization for each element of selection</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="k">return</span> <span class="k">this</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">index</span><span class="p">,</span> <span class="nx">element</span><span class="p">)</span> <span class="p">{</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-66">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-66">&#182;</a>               </div>               <p>this refers to the html element in the collection</p>             </td>             <td class="code">               <div class="highlight"><pre>      <span class="nx">isInstantiated</span><span class="p">(</span><span class="nx">element</span><span class="p">,</span> <span class="p">{</span>
+        <span class="nx">yes</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">pluginObj</span><span class="p">)</span> <span class="p">{</span>
+          
+        <span class="p">},</span>
+        <span class="nx">no</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">pluginObj</span><span class="p">)</span> <span class="p">{</span>
+          
+          <span class="nx">$</span><span class="p">.</span><span class="nx">data</span><span class="p">(</span><span class="nx">element</span><span class="p">,</span> <span class="nx">pluginName</span><span class="p">,</span> <span class="k">new</span> <span class="nx">Plugin</span><span class="p">(</span><span class="nx">element</span><span class="p">,</span> <span class="nx">method_or_options</span><span class="p">)</span> <span class="p">);</span>
+        <span class="p">}</span>
+      <span class="p">});</span>
+    <span class="p">});</span>
+    
+  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">method_or_options</span> <span class="o">==</span> <span class="s1">&#39;obj&#39;</span><span class="p">)</span> <span class="p">{</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-67">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-67">&#182;</a>               </div>               <p>return the plugin object instance</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="kd">var</span> <span class="nx">responseArr</span> <span class="o">=</span> <span class="p">[];</span>
+    
+    <span class="k">this</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="kd">function</span><span class="p">(</span><span class="nx">index</span><span class="p">,</span> <span class="nx">element</span><span class="p">)</span> <span class="p">{</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-68">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-68">&#182;</a>               </div>               <p>this refers to the html element in the collection</p>             </td>             <td class="code">               <div class="highlight"><pre>      <span class="nx">isInstantiated</span><span class="p">(</span><span class="nx">element</span><span class="p">,</span> <span class="p">{</span>
+        <span class="nx">yes</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">pluginObj</span><span class="p">)</span> <span class="p">{</span>
+          
+          <span class="nx">responseArr</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">pluginObj</span><span class="p">);</span>
+        <span class="p">},</span>
+        <span class="nx">no</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+          
+          <span class="kd">var</span> <span class="nx">plug</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">data</span><span class="p">(</span><span class="nx">element</span><span class="p">,</span> <span class="nx">pluginName</span><span class="p">,</span> <span class="k">new</span> <span class="nx">Plugin</span><span class="p">(</span><span class="nx">element</span><span class="p">)</span> <span class="p">);</span>
+          
+          <span class="nx">responseArr</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">plug</span><span class="p">);</span>
+        <span class="p">}</span>
+      <span class="p">});</span>
+    <span class="p">});</span>
+    
+    <span class="k">return</span> <span class="nx">respond</span><span class="p">(</span><span class="nx">responseArr</span><span class="p">);</span>
+    
+  <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span> <span class="k">typeof</span> <span class="nx">method_or_options</span> <span class="o">===</span> <span class="s1">&#39;string&#39;</span> <span class="o">&amp;&amp;</span> <span class="nx">method_or_options</span> <span class="o">!=</span> <span class="s1">&#39;obj&#39;</span><span class="p">)</span> <span class="p">{</span>
+    
+    <span class="kd">var</span> <span class="nx">responseArr</span> <span class="o">=</span> <span class="p">[];</span>
+    
+    <span class="k">this</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+      
+      <span class="nx">isInstantiated</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="p">{</span>
+        <span class="nx">yes</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">pluginObj</span><span class="p">)</span> <span class="p">{</span></pre></div>             </td>           </tr>                               <tr id="section-69">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-69">&#182;</a>               </div>               <p>run the method requested using the pluginObj context</p>             </td>             <td class="code">               <div class="highlight"><pre>          <span class="nx">responseArr</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span> <span class="nx">pluginObj</span><span class="p">[</span><span class="nx">method_or_options</span><span class="p">].</span><span class="nx">apply</span><span class="p">(</span><span class="nx">pluginObj</span><span class="p">,</span> <span class="nx">args</span><span class="p">)</span> <span class="p">);</span>
+        <span class="p">},</span>
+        <span class="nx">no</span><span class="o">:</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span></pre></div>             </td>           </tr>                               <tr id="section-70">             <td class="docs">               <div class="pilwrap">                 <a class="pilcrow" href="#section-70">&#182;</a>               </div>               <p>if not, throw error</p>             </td>             <td class="code">               <div class="highlight"><pre>          <span class="k">throw</span> <span class="k">new</span> <span class="nb">Error</span><span class="p">(</span><span class="s1">&#39;This element\&#39;s \&#39;&#39;</span> <span class="o">+</span> <span class="nx">pluginName</span> <span class="o">+</span> <span class="s1">&#39; plugin has not yet been initialized&#39;</span><span class="p">);</span>
+        <span class="p">}</span>
+      <span class="p">});</span>
+    <span class="p">});</span>
+    
+    <span class="k">return</span> <span class="nx">respond</span><span class="p">(</span><span class="nx">responseArr</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="k">return</span> <span class="nx">Plugin</span><span class="p">;</span>
+  
+<span class="p">});</span>
+
+</pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 

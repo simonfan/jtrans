@@ -1,0 +1,16 @@
+define(['jtrans'], function(jtrans) {
+	
+	var view = jtrans.prototype.Constructors.ElementView.extend({
+		events: {
+			'click': 'doAnything'
+		},
+		
+		doAnything: function() {
+			this.pluginObj.navigate('transitions/first/jsjajdakdjasdjksadksad', {trigger: true});
+		},
+	});
+	
+	return view;
+		
+		
+});

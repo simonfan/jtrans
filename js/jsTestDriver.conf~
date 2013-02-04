@@ -1,0 +1,12 @@
+server: http://localhost:4224
+
+load:
+ - lib/requireJS.js
+ - src/require_config.js
+ - test/*.js
+
+timeout: 90
+
+serve:
+ - src/*.js
+ - lib/*.js

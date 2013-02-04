@@ -1,0 +1,1165 @@
+define(['jquery','backbone','underscore','jfill'], function($, Backbone, underscore, jfill, undefined) {
+	
+// underscore template settings
+_.templateSettings = {
+	evaluate: /\{\[([\s\S]+?)\]\}/g,
+	interpolate: /\{\{(.+?)\}\}/g,
+	variable: 'data'
+};
+
+// defaultCss's properties will be set on the 
+// Constructors.ElementView $el (the 'LI') on View initialization.
+// Their properties should be overridden when instantiating 
+// new elements, in the 'elCss' property.
+var defaultCss = {
+		listStyle: 'none',
+		margin: '0 0 0 0',
+		padding: '0 0 0 0',
+		width: '100%',
+		height: '100%', 
+		zIndex: 0,
+		opacity: 0,
+		display: 'none',
+		top: 0,
+		left: 0,
+		position: 'absolute',
+		backgroundColor: 'transparent'
+	};
+	
+// The transitions var is used to store the transition objects.
+// When calling '.registerTransition()', a TransitionObject is added here.		
+var transitions = {
+		fade: {
+			show: function(defer, duration) {
+				this.$el.animate({opacity: 1}, 
+					{
+						duration: duration,
+						complete: function() {
+							defer.resolve();
+						}
+					});
+			},
+			hide: function(defer, duration) {
+				this.$el.animate({opacity: 0},
+					{
+						duration: duration,
+						complete: defer.resolve
+					});							
+			}
+		}
+	};
+	
+// This Utility function checks if the plugin is instantiated and runs the 
+// right callback function (yes or no)
+function isInstantiated(element, actions) {
+	
+	var jtrans = $.data(element, pluginName);
+	
+	if (jtrans) {
+		actions.yes(jtrans);
+	} else {				
+		actions.no();
+	}
+}
+
+// This Utility function checks if the responseArr is composed of only one value
+// and if so, it responds with the value directly instead of an array
+function respond(responseArr) {
+	
+	if (responseArr.length == 1) {
+		return responseArr[0];
+	} else if (responseArr.length == 0) {
+		return false;
+	} else if (responseArr.length > 1) {
+		return responseArr;	
+	}
+}
+
+// Validates any object by verifying properties and respective 'typeofs'.
+// The 'props' var should be an object in the format: props = { propName: 'expected typeof' }
+function validateObj(obj, props) {
+	_.each(props, function(expected_type, prop_name) {
+		var actual_type = typeof obj[prop_name];
+			
+		if (!obj[prop_name]) {
+			throw new Error("There is no '" + prop_name + "' in " + obj);
+		}
+		
+		if (actual_type != expected_type) {
+			throw new TypeError("The property '" + prop_name + "' from " + obj + " is not a '" + expected_type + "' but a '" + actual_type + "'");
+		}
+	});
+	return true;
+}
+
+// Function validates a transition object using validateObj
+function validateTransition(transition, name) {
+	var props = {
+			show: 'function',
+			hide: 'function'
+		},
+		val = validateObj(transition, props);
+		
+	return val;
+}
+
+
+// Function checks if the i.obj is an array, string or object and
+// calls the corresponding function in the provided context.
+// If the obj is a STRING: pass it directly to the 'str' function;
+// If it is an ARRAY: 
+//   1 - If 'arrItem' exists, iterate over the array using the 'arrItem'
+//	     as the iterator.
+//   2 - Else if 'arr' exists, pass the array directly.
+// If it is an OBJECT: not implemented yet
+// 
+//	i:
+//		- obj,*
+//		- funcs:*
+//			- str,	*
+//			- arrItem,	*
+//			- arr,	*
+//			- objItem,
+//			- obj
+//		- context
+function arrStrObj(obj, funcs, context) {
+	var type = typeof obj;
+	
+	if (type === 'string') {
+		funcs.str.call(context, obj);
+	} else if ( _.isArray(obj) ) {
+		
+		if (funcs.arrItem) {
+			_.each(obj, function(val, index) {
+				funcs.arrItem.call(context, val, index);
+			});
+		} else {
+			funcs.arr.call(context, obj);
+		}
+		
+	} else {
+		
+		if (funcs.objItem) {
+			_.each(obj, function(val, index) {
+				funcs.objItem.call(context, val, index);
+			});
+		} else if (funcs.obj) {
+			funcs.obj.call(context, obj);
+		}
+	}
+}
+
+// requireDefer is an wrapper of a RequireJS 'require' function.
+// It receives the name of the module to be required and a function that will 
+// deal with the requirement's response.
+// Then, by using a $.Deferred() object, it calls the requireSuccess when the require is ready.
+function requireDefer(required, requireSuccess, context) {
+	var deferral = $.Deferred();
+	
+	if (typeof required === 'string') {
+		required = [required];
+	}
+	
+	require(required, function() {
+		requireSuccess.apply(context, arguments);
+		deferral.resolve();
+	});
+	
+	return deferral;
+}
+
+// waitFor receives ANY number of 'eventObjects', which are composed of:
+// - emitter,	(the object to listen to)
+// - name,		(the name of the event to be listened)
+// - check		(a function used to check if the event has already happened);
+// The 'waitFor' then builds a $.Deferred() object, which is returned
+// and will only be solved when all the events happen (or have already happened);
+// That is done by creating one $.Deferred() object to be resolved at each event
+// triggering.
+// Parameters:
+// o:
+//	- emitter,		->	object
+//	- events,		->	array of strings or array of "event-objects"
+//	- permanent,	-> 	boolean, defaults to FALSE
+//	- callback,
+//	- [context]
+function waitFor(o) {
+	var waitList = [];
+	
+	_.each(o.events, function(e, index) {
+		var defer = $.Deferred(),
+			emitter = e.emitter || o.emitter,
+			event = e.name || e,
+			check = typeof e.check == 'function' ? e.check() : false,
+			checkFail = typeof e.checkFail == 'function'? e.checkFail : o.checkFail;
+			
+		if ( check ) {
+			defer = true;
+		} else {
+			
+			console.log(e.name + '  fail');
+			if (typeof checkFail === 'function') {
+				checkFail.call(o.context);
+			}
+			
+			emitter.once(event, function() { defer.resolve(); });
+		}
+			
+		waitList.push(defer);
+	});
+	
+	$.when.apply(null, waitList).then(function() {
+		o.callback.apply(o.context, arguments);
+		
+		if (o.permanent) { waitFor.apply(null, o); }
+	});
+}
+
+// Utils holds all the utility functions
+var Utils = {
+	isInstantiated: isInstantiated,
+	respond: respond,
+	validateTransition: validateTransition,
+	validateObj: validateObj,
+	arrStrObj: arrStrObj,
+	requireDefer: requireDefer,
+	waitFor: waitFor
+}
+
+// Constructors hold all the Backbone constructors
+var Constructors = {};
+
+// The ElementView is a Backbone.View that coordinates interactions and events
+// on the HTML. It listens to events on the ElementModel (described below).
+// If you wish to listen to events, add other functionalities to the ElementView
+// of your element, you should build a CustomElementView, by extending 
+// PluginObj.Constructors.ElementView as you would do with a Backbone.View.
+// If you need to set any options on the View initialization, please DO NOT overwrite
+// the property 'initialize', as it is used by the Constructor.ElementView
+// to set up basic transition methods. Instead, you may overwrite the 
+// 'extendedInitialize' property, which is a no-op in the default ElementView,
+// and is called at the end of the default initialize method.
+// By extending the default ElementView, you gain access to the following objects:
+// - elModel (the element model, where data about the transition and view are set)
+// - elCollection (the element collection, which contains all the models in the transition object)
+// - jtrans
+Constructors.ElementView = Backbone.View.extend({
+	// The default tagName for the view is a list element. 
+	// It is appended to the 'ul' element by '._basicRender'
+	tagName: 'li',
+	initialize: function(opts) {
+		_.bindAll(this);
+		
+		var _this = this;
+		
+		// Check if all necessary data has been passed in the options object
+		if (!opts.elModel) {
+			throw new Error('No opts.elModel passed to View initialization');
+		} else if (!opts.elCollection) {
+			throw new Error('No opts.elCollection passed to View initialization');
+		} else if (!opts.jtrans) {
+			throw new Error('No opts.jtrans passsed to View initialization');
+		}
+		
+		// save the options
+		this.options = opts;
+		
+		// Save reference to elModel, elCollection, jtrans
+		this.elModel = opts.elModel;
+		this.elCollection = opts.elCollection;
+		this.jtrans = opts.jtrans;
+		
+		this._basicRender();
+	},
+	
+	// This method is always called. Overwrite it if you wish to do initialization
+	// on your custom view. DO NOT overwrite '.initialize'.
+	// Extended initialize is only called after the page has rendered!!!
+	// It waits for the 'render-status:render-ready' event
+	extendedInitialize: function(opts) {},
+	
+	// This method appends the view's $el (an 'li') to the $ul of the jtrans.
+	// Also, it applies the 'elCss' to the $el.
+	// The 'elCss' property may be set both in the jtrans level [jtrans.set('elCss', elCss),
+	// becoming a default elCss for all views, 
+	// and in the element level [jtrans.addElement({id: id ,elCss: elCss}, 
+	// being used only at the instantiated element.
+	_basicRender: function() {
+		var $ul = this.jtrans.els.$ul,
+			elCss = _.extend({}, defaultCss, this.getOpt('elCss') );
+			
+		this.$el.attr('id', this.getOpt('id') );
+		$ul.append(this.$el);
+		
+		this.$el.css(elCss);
+	},
+	
+	// render method is called only when the 'view-instantiated' event is triggered
+	// by the model. That is when all the remote requests are ready and when the 
+	// view has already been instantiated, so that we already have access to
+	// the $el and the basic rendering has been done.
+	// The method gets the template string and compiles it using underscore 
+	// templating machine. 
+	render: function() {
+		var template = this.getOpt('template'),
+			_this = this;
+		
+		if (template) {
+			var compile_template = _.template(template);
+			this.$el.html( compile_template() );
+		}
+		
+		this.elModel.set({ 'render-status': 'render-ready' });
+	},
+	
+	// The _mapHtml method may only be called after the view's template 
+	// has been rendered. 
+	// It receives an ARRAY containing the ids of each element in the template
+	// that you require to be saved in cache.
+	// Also, the htmlMap is used by the .fillIn() method.
+	// After fetching all the elements, they are stored in the 
+	// 'fields' hash on this view.
+	_mapHtml: function() {
+		var _this = this,
+			selectors = this.getOpt('htmlMap');
+		
+		if (selectors) {
+			this.htmlMap = {};
+			
+			arrStrObj(selectors, {
+				arrItem: function(val, index) {
+					_this.htmlMap[val] = _this.$el.find(val);
+				},
+				
+				objItem: function(val, index) {
+					_this.htmlMap[index] = _this.$el.find(val);
+				}
+			});
+		}
+	},
+	
+	// This method requires the fields to be already mapped. (see '_mapHtml')
+	// Whenever the 'change:fillInData' event is fired on the model,
+	// this method gets the dataObj and sets the data into the corresponding 
+	// field, by checking the field's id.
+	fillIn: function() {
+		var data = this.elModel.get('fillInData'),
+			_this = this;
+			
+		if (data && _this.htmlMap) {
+			arrStrObj(data, {
+				arr: function(arr) {
+					var fieldsArr = _.toArray( _this.htmlMap );
+					
+					_.each(arr, function(val, index) {
+						val = val || '';
+							
+						if ( fieldsArr[index] ) {
+							fieldsArr[index].jFill(val);
+						}
+					});
+				},
+				objItem: function(val, index) {
+					val = val || '';
+					
+					if ( _this.htmlMap[index] ) {
+						_this.htmlMap[index].jFill(val);
+					}
+				}
+			}, _this);
+		}
+	},
+	
+	// .processData() method is activated whenever the 'dataObj' key changes.
+	// By default it directly sets the dataObj as the fillInData, 
+	// so that it be filledIn. But that is kind of dumb, so you definetly should 
+	// overwrite it with your custom .processData
+	processData: function(model, value, options) {
+		// this.elModel.set('fillInData', this.elModel.get('dataObj') );
+	},
+	
+	// The _setDisplay method is a core method in the transitions plugin.
+	// Whenever the model fires a 'change:display' event, this method is called
+	// to check if the View should 'show' or 'hide' it_this.
+	// In this function, the '.setup()' and '.teardown()' methods are called.
+	// The .setup is run before the showing animation and the .teardown is
+	// run immediately after the hiding animation.
+	// 
+	// If the view is set to be shown, then it is set to listen to two chained events:
+	// a 'waitFor-combo' of ['show-prep-ready','render-ready'] and a 'show-start'.
+	// The 'show-prep-ready' event is fired by the PLUGINOBJ when ALL pages that should
+	// be hidden have their 'transition-status' set as 'element-hidden'.
+	// The 'render-ready' event isFinite fired by the MODEL when the rendering 
+	// of the template is complete.
+	// When these two events are ready, then the waitFor combo fires the 'show-start'
+	// event which tells the plugin to be shown to start its showing process.
+	//
+	// If the view is set to be hidden, then first checks if the 'overlap' option
+	// is higher than 0 and lower than 1. If so, it sets a timeout (based on 
+	// the animation total 'duration' and the overlap multiplier) which will trigger
+	// the 'element-hidden' on the model.
+	// Then it waits for the hiding animation to be complete in order to fire the 
+	// 'element-hidden' event.
+	_setDisplay: function(model, value) {
+		var _this = this,
+			model = this.elModel,
+			displayValue = model.getOpt('display');
+		
+		switch (displayValue) {
+			case 'show':
+				var _this = this;
+				
+				this.elModel.once('show-start', function() {
+					$.when( _this.show() ).then(function() {
+							_this.elModel.set({ 'transition-status': 'element-exposed' });
+							
+							_this.afterShow();
+						});
+				});
+				
+				waitFor.call(this, {
+					events: [
+						{
+							emitter: this.jtrans.events, 
+							name: 'show-prep-ready',
+							check: function() {
+								return _this.jtrans.get('transition-status') == 'show-prep-ready';
+							}
+						},
+						{
+							emitter: this.elModel,
+							name: 'render-ready',
+							check: function() {
+								return _this.elModel.get('render-status') == 'render-ready';
+							}
+						},
+					],
+					callback: function() { _this.elModel.set('transition-status', 'show-start'); },
+					context: this
+				});
+				break;
+				
+			case 'hide':
+				var overlap = this.jtrans.get('overlap');
+				
+				if (overlap > 0 && overlap <= 1) {
+					var duration = this.getOpt('duration'),
+						overlapDue = duration * (1 - overlap);
+						
+					setTimeout(function() {
+						_this.elModel.set({ 'transition-status': 'element-hidden' });
+					}, overlapDue);
+				}
+				
+				this.beforeHide();
+				
+				$.when( this.hide() ).then(function() {
+					_this.$el.css('display', 'none');
+						
+					_this.teardown();
+					_this.elModel.set({ 'transition-status': 'element-hidden' });
+					
+					_this.afterHide();
+				});
+				break;
+				
+			default:
+				// do nothing. probably it is in the initialization case
+				break;
+		}
+	},
+	
+	// The .show() method is called by ._setDisplay method.
+	// It builds and returns a $.Deferred() object which is passed to the 
+	// transitionObj.show function. That function should resolve this deferral
+	// whenever it is ready (usually when animation is complete);
+	show: function() {
+		var _this = this,
+			defer = $.Deferred(),
+			asyncDefer,
+			type = this.getOpt('transitionType'),
+			duration = this.getOpt('duration');
+			
+		this.$el.css('display', 'block');
+		
+		this.setup();
+		
+		// if there is a asynchronous setup function, 
+		// wait untill it is done.
+		
+		if (typeof this.asyncSetup === 'function') {
+			asyncDefer = $.Deferred();
+			
+			this.asyncSetup(asyncDefer);
+		} else {
+			asyncDefer = true;
+		}
+		
+		$.when(asyncDefer)
+			.then(function() {
+				_this.beforeShow();
+				transitions[type]['show'].call(_this, defer, duration);
+			});
+		
+		return defer;
+	},
+	
+	// The .hide() method is called by ._setDisplay method.
+	// It builds a deferral which is passed to the transitionObj.hide method.
+	// That function should resolve this deferral whenever the hiding animation is
+	// done.
+	hide: function() {
+		var _this = this,
+			defer = $.Deferred(),
+			type = this.getOpt('transitionType'),
+			duration = this.getOpt('duration');
+			
+		transitions[type]['hide'].call(this, defer, duration);
+		
+		return defer;
+	},
+	
+	// The .getOpt() method is an alias to the elModel's getOpt method.
+	getOpt: function(opt) {
+		return this.elModel.getOpt(opt);
+	},
+	
+	// This is an no-op. The .setup() method may be overwritten
+	// if you wish to do anything immediately before the .show()
+	// method is called.
+	setup: function() {},
+	beforeShow: function() {},
+	afterShow: function() {},
+	
+	// This is an no-op. The .teardown() method may be overwritten
+	// if you wish to do anything AFTER the .hide() method is complete.
+	teardown: function() {},
+	beforeHide: function() {},
+	afterHide: function() {}
+});
+
+// The ElementModel is where all the Element-wise settings are saved.
+// It is also where the 'transition-status' and 'render-status' events are saved
+// and triggered.
+// As about functionalities, the ElementModel is responsible for registering and 
+// fetching required remote data
+// All
+Constructors.ElementModel = Backbone.Model.extend({
+	defaults: {
+		display: 'not-initialized',
+		'render-status': 'not-initialized',
+		'transition-status': 'not-initialized',
+		dataObj: {},
+		fillInData: {}
+		
+		/*
+			render-status events: (uni-directional)
+				- not-initialized,
+				- remote-loading,
+				- remote-ready
+				- render-ready
+		
+			transition-status events: (circular)
+				- not-initialized
+			
+				circular:
+				- element-hidden,
+				- show-prepared,
+				- show-start,
+				- element-exposed,
+				- hide-start
+		*/
+	},
+	
+	initialize: function(attributes, opts) {
+		_.bindAll(this);
+		
+		var _this = this;			
+		
+		this.elCollection = this.get('elCollection');
+		if (typeof this.elCollection !== 'object') { throw new Error('This model hasn\'t been given a elCollection'); }
+		this.jtrans = this.elCollection.jtrans;
+		
+		// proxy all this model's events to the jtrans
+		this.on('all', function(event) {
+			_this.jtrans.events.trigger(event, _this);
+		});
+		
+		// all changes on the 'remote-status' should be 
+		// fired by the eventedSetting
+		this.on('change:render-status', this.eventedSetting);
+		
+		// all changes on the 'transition-status' should be 
+		// fired by 'eventedSetting'
+		this.on('change:transition-status', this.eventedSetting);
+		
+		// set view listeners everytime it is changed
+		this.on('change:view', this.setViewListeners);
+		
+		// set the view to be instantiated only when the 
+		// 'remote-ready' event is fired
+		this.on('remote-ready', this.setView);
+		
+		// load all dependencies if this is a priority view (if any)
+		this.loadDependencies();
+	},
+	
+	// .eventedSetting handles 'change:key' events by triggering a event the same
+	// name as the value to which the key was changed to.
+	// If you register any 'change:key' event to be handled by this method,
+	// whenever that key is changed on the model, the model it_this will trigger a event
+	// with the same name as the new value of the eventedKey.
+	// This concept is extremely useful when you need to listen to events AND save 
+	// states, as augments the action of setting a key value into a event.
+	// NEED FURTHER CLEARER EXPLANANTION.
+	eventedSetting: function(model, value, options) {
+		this.trigger(value, this);
+	},
+	
+	// .loadDependencies() method builds an $.Deferred object that is returned
+	// and resolved whenever the required dependencies are ready.
+	// In order to use it, you need to set the 'dependencies' key on the model
+	// with an array of dependency objects, which contain the following properties:
+	//	dep:
+	//		- name,
+	//		- url,
+	//		- type,				-> 'template', 'elView'
+	//		- requireSuccess	-> function to deal with require response.
+	// 
+	// If you specify in the dependency obj that it is either 'template' 
+	// or 'elView' dep, the requireSuccess is not necessary, as the plugin 
+	// deals with the response it_this. Otherwise, you must provide a requireSuccess, which
+	// will be passed an object with the required module object.
+	// 
+	// For each dependency in the 'dependencies' property of the model,
+	// the function builds an $.Deferred() object which is to be resolved
+	// after the required module is ready and the module has already been processed
+	// by the requireSuccess. This first part is done using the requireDefer() function (see Utils)
+	// 
+	// When all requireDefers are resolved, the method fires the event 'remote-ready' on the model.
+	// 
+	// TEMPLATE loading:
+	// If the dependency is a 'template', the method uses the text! plugin to do the loading
+	// and saves the response directly to the model's template attr.
+	// 
+	// VIEW-CONSTRUCTOR loading:
+	// If the dependency is a 'elView', the method loads the module using basic
+	// require and saves the response directly to the model's elView attribute.
+	//
+	// CUSTOM MODULE loading:
+	// If no type is specified on the dependency, the method loads the module using basic
+	// require and applies the dep.requireSuccess function using the model's context and 
+	// received arguments.
+	loadDependencies: function() {
+		var id = this.get('templateId') || this.get('id'),
+			_this = this,
+			dependencies = this.getOpt('dependencies'),
+			deferrals = [];
+			
+		if (typeof dependencies === 'undefined' || dependencies.length == 0) {
+			deferrals = [true];
+		} else {
+			
+			_.each(dependencies, function(dep, index) {
+					
+				if (dep.type == 'template') {
+					var def = requireDefer('text!' + dep.modules, function(temp) {
+							_this.set({ template: temp });
+						});
+					
+					deferrals.push(def);
+					
+				} else if (dep.type == 'elView') {
+					var def = requireDefer(dep.modules, function(view) {
+							_this.set('elView', view);
+						});
+					
+					deferrals.push(def);
+					
+				} else {
+					
+					if (typeof dep.requireSuccess !== 'function') {
+						throw new Error('The dependecy object ' + dep.name + ' did not provide a \'requireSuccess\' function. Either provide that, or set the dependency \'type\'');
+					} else {
+						var def = requireDefer(dep.modules, dep.requireSuccess, _this);
+						
+						deferrals.push(def);
+					}
+				}
+			});	// close _.each
+		}	// close if else
+			
+		$.when.apply(_this, deferrals)
+			.then(function() {
+				_this.set({ 'render-status': 'remote-ready' });
+			});
+	},
+	
+	// .setView() method instantiates the view of the element.
+	// It waits for the 'render-status' == 'remote-ready' event to be fired 
+	// (which is done by the .loadDependencies method);
+	// After the view is instantiated it fires the 'render-status' == 'view-instantiated'
+	// event.
+	setView: function() {
+		var _this = this,
+			view = this.getOpt('elView');
+			
+		if (typeof view === 'function') {
+			view = new view({
+				elModel: _this, 
+				elCollection: _this.elCollection,
+				jtrans: _this.jtrans
+			});
+		}
+		
+		this.set({
+			view: view,
+			'render-status': 'view-instantiated'
+		});	
+	},
+	
+	setViewListeners: function() {
+		var view = this.get('view'),
+			_this = this;
+		
+		// The event 'change:display' is a crucial event in the 
+		// architecture of the transitions plugin.
+		// Whenever it changes in each model, the respective view is triggered
+		// to set its own display to the corresponding status. If the 
+		// display property does not change, then nothing occurs.		
+		view.listenTo(this, 'change:display', view._setDisplay);
+		
+		// The rendering function awaits the 'view-instantiated' to start.
+		// The 'view-instantiated' event is fired by the '.setView()' method
+		// on the model. It is fired right after the view had been instantiated
+		// AND the template is loaded.
+		view.listenTo(this, 'view-instantiated', view.render);
+		
+		// Whenever the property 'htmlMap' on the model changes,
+		// map the fields again. 
+		// Whenever the property 'fillInData' on the model changes,
+		// the view should update it_this by calling fillIn.
+		// And the view should set it's own display.
+		//
+		// But that should only occur once the rendering is ready.
+		this.once('render-ready', function() {
+			view.listenTo(_this, 'change:htmlMap', view._mapHtml);
+			view.listenTo(_this, 'change:fillInData', view.fillIn);
+			view.listenTo(_this, 'change:dataObj', view.processData);
+
+			view._mapHtml();
+			
+			view.extendedInitialize(view.options);
+			
+			view.fillIn();
+			view.processData();
+			
+			view._setDisplay();
+		});
+	},
+	
+	// .getOpt() method tries to get the attribute in this model and
+	// if it is not successful, it gets the same option on the jtrans 
+	// where the default and global settings are stored.
+	getOpt: function(opt) {
+		return this.get(opt) || this.jtrans.get(opt);
+	}
+});
+
+// ElementCollection does not actually do many things.
+// It is basically a way of keeping Elements in order.
+Constructors.ElementCollection = Backbone.Collection.extend({
+	model: Constructors.ElementModel,
+	
+	initialize: function(models, opts) {
+		
+		this.opts = opts;
+		
+		this.jtrans = opts.jtrans;
+	}
+});
+
+// Router is the default Router constructor of the element.
+Constructors.Router = Backbone.Router;
+
+// Plugin default GLOBAL configurations
+var pluginName = 'jtrans',
+	pluginDefaults = {
+		overlap: 0,
+		transitionType: 'fade',
+		duration: 500,
+		remote: false,
+		templateUrl: undefined,
+		template: '<div id="replace-with-yours">You should place your template here</div>',
+		viewUrl: undefined,
+		dependencies: [],
+		'elView': Constructors.ElementView,
+		initializeTo: undefined,
+		
+		'transition-status': 'element-hidden',
+		'render-status': 'not-initialized',
+		
+		// the shared namespace
+		shared: new Backbone.Model()
+	};	
+
+// Plugin is the constructor of the object to be stored in $.data(element, 'jtrans')
+// It's got all the public mehtods, helper methods and does the plugin initial setup.
+function Plugin(element, options) {
+	var _this = this;
+	
+	this._defaults = pluginDefaults;
+	this._pluginName = pluginName;
+	
+	this.options = $.extend( {}, pluginDefaults, options );
+	
+	this.els = {
+		frame: element,
+		$frame: $(element)
+	}
+	
+	this.events = _.extend({}, Backbone.Events);
+	
+	// as all models' events are being proxied to this object
+	// we may listen to 'change:transition-status' and 'change:render-status'
+	// on this object
+	this.events.on('change:render-status', function(model) {
+		_this.set('render-status', model.get('render-status') );
+	});
+	
+	this.events.on('change:transition-status', function(model) {
+		_this.set('transition-status', model.get('transition-status') );
+	});
+	
+	this.setFraming();
+	
+	this.elCollection = new Constructors.ElementCollection([], { jtrans: this });
+	this.Router = new Constructors.Router();
+}
+
+// .setFraming method builds up the 'ul' list to which all elements' html will be 
+// attached.
+Plugin.prototype.setFraming = function() {
+	if (this.els.frame.tagName != 'DIV') {
+		throw new Error('The element passed is not a DIV');
+	}
+	
+	this.els.$frame.css({
+		position: 'relative'
+	});
+	
+	var $ul = $('<ul></ul>').appendTo(this.els.$frame)
+		.css({
+			position: 'relative',
+			top: '0px',
+			left: '0px',
+			
+			width: '100%',
+			height: '100%',
+			
+			padding: '0 0 0 0',
+			margin: '0 0 0 0'
+		});
+		
+	this.els.$ul = $ul;
+	this.els.ul = this.els.$ul[0];
+}
+
+// Remove the plugin.
+Plugin.prototype.remove = function() {
+	$.removeData(this.els.frame, pluginName);
+}
+
+Plugin.prototype.set = function(opt, val) {
+	switch (typeof opt) {
+		case 'object':
+			for (option in opt) {
+				if ( opt.hasOwnProperty(option) ) {
+					if ( this.options[option] !== opt[option] ) {
+						this.options[option] = opt[option];
+						
+						this.events.trigger('plugin-opt:' + option, opt[option]);
+					}
+				}
+			}
+			break;
+		case 'string':
+			if ( this.options[opt] !== val ) {
+				this.options[opt] = val;
+				this.events.trigger('plugin-opt:' + opt, val);
+			}                                   
+				
+			break;
+	}
+	return this;
+}
+
+Plugin.prototype.get = function(opt, deep) {
+	
+	if (typeof deep == 'undefined') {
+		// gets an option of the plugin
+		return this.options[opt];
+	} else if (opt == 'element') {
+		// gets an element model
+		return this.elCollection.get(deep);
+	} else if (opt == 'prop') {
+		// directly gets a prop from this obj
+		return this[deep];
+	}
+}
+
+// To register a transition, you must pass a transition object
+// It is composed of:
+//  transition:
+//		- show,
+//		- hide,
+Plugin.prototype.registerTransition = function(name_or_transitions, obj) {
+	if (typeof name_or_transitions === 'string') {
+		
+		validateTransition(name_or_transitions, obj);
+		
+		transitions[name_or_transitions] = obj;
+		
+	} else if (typeof name_or_transitions === 'object') {
+		
+		_.each(name_or_transitions, function(trans, index) {
+			
+			validateTransition(trans, index);
+			
+			transitions[index] = trans;
+		});
+	}
+	return this;
+}
+
+// To add a element to the transition plugin, you should create a 
+// elementOptions object, which shall contain:
+// 		- id,
+//		- transitionType,
+//		- duration,
+//		- template,
+//		- dependencies: [
+//				{
+//					- name,
+//					- url,
+//					- type,
+//					- requireSuccess
+//				}
+//			]
+//		- dataObj,
+//		- elView,
+//		- htmlMap
+//		- elCss
+//		- route
+//		- paramMap: ['var','var2']
+//
+// If a route is provided in the elementOptions object, 
+// the method will call addRoute as well.
+Plugin.prototype.addElement = function(info) {
+	var elInfo = _.extend({}, { jtrans: this, elCollection: this.elCollection }, info),
+		route = info.route;
+		
+	if (route) {
+		this.addRoute({
+			route: route, 
+			name: info.id, 
+			elementIds: info.id, 
+			paramMap: info.paramMap
+		});
+	}
+	
+	this.elCollection.add(elInfo);
+	return this;
+}
+
+// The display mehtod accepts both string value and array of strings
+// in the id_or_ids field. It also sets dataObj of the elements. The dataObj
+// var could also be only one dataObj or an array of dataObjs. If dataObj is an
+// array, then the function will try to match the index of the two arrays 
+// (ids and dataObjects) so that the correct chunk of data is passed to the correct
+// elements.
+Plugin.prototype.display = function(id_or_ids, dataObj) {
+	var _this = this,
+		elements_to_hide = [];
+		
+	arrStrObj(id_or_ids, {
+			str: function(val) {
+				
+				this.elCollection.each( function(model, index) {
+					if (model.get('id') !== val) {
+						elements_to_hide.push(model);
+						model.set({ display: 'hide' });
+					} else {
+						model.set({ display: 'show', dataObj: dataObj });
+					}
+				});
+			},
+			arr: function(array) {
+				
+				this.elCollection.each( function(model, index) {
+					var id = model.get('id');
+					
+					if ( _.indexOf(array, id) == -1 ) {
+						elements_to_hide.push(model);
+						model.set({ display: 'hide' });
+					} else {
+						model.set({ display: 'show', dataObj: dataObj });
+					}
+				});
+			}
+		},
+		_this);
+	
+	// check for the hiding elements
+	this.checkHideStatus(elements_to_hide);
+	
+	return this;
+},
+
+
+// needs to be passed a 
+Plugin.prototype.checkHideStatus = function(elements_to_hide) {
+	var events = [],
+		_this = this;
+		
+	_.each(elements_to_hide, function(elModel, index) {
+		var e = {
+			emitter: elModel,
+			name: 'element-hidden',
+			check: function() {					
+				return elModel.get('transition-status') == 'element-hidden';
+			}
+		};
+		
+		events.push(e);
+	});
+	
+	waitFor.call(_this, {
+		name: 'first event',
+		events: events,
+		callback: function() {
+			
+			// save the status
+			_this.set('transition-status', 'show-prep-ready');
+			
+			// trigger the event
+			_this.events.trigger('show-prep-ready');
+		},
+		context: _this
+	});
+},
+
+// This function accepts:
+//  o:
+//		- route,
+//		- name,
+//		- elementIds,
+//		- paramMap
+//
+// If you pass in a paramMap array, the parameters passed by the route will be 
+// identified and then directly build a dataObj to be set on the models.
+// If you do not pass a paramMap, the values won't be usable.
+Plugin.prototype.addRoute = function(o) {
+	var _this = this,
+		callback = function() {
+			var dataObj, 
+				args = _.toArray(arguments);
+			
+			if (o.paramMap) {
+				dataObj = {};
+				
+				_.each(o.paramMap, function(dataName, index) {
+					dataObj[dataName] = args[index];
+				});
+			} else {
+				dataObj = args;
+			}
+			
+			_this.display.call(_this, o.elementIds, dataObj);
+		};
+	
+	this.Router.route(o.route, o.name, callback);
+};
+
+// Direct access to the router's navigate function
+Plugin.prototype.navigate = function(route, options) {
+	return this.Router.navigate(route, options);
+}
+
+// Direct access to backbone mocels, collections and views
+Plugin.prototype.Constructors = Constructors;
+
+// Direct access to Utils
+Plugin.prototype.Utils = Utils;
+
+// The jquery plugin wrapper.
+$.fn[pluginName] = function ( method_or_options ) {
+	
+	var args = Array.prototype.slice.call(arguments, 1);
+	
+	if ( typeof method_or_options === 'object' || !method_or_options ) {
+		
+		// run initialization for each element of selection
+		return this.each(function(index, element) {
+				
+			// this refers to the html element in the collection
+			isInstantiated(element, {
+				yes: function(jtrans) {
+					
+				},
+				no: function(jtrans) {
+					
+					$.data(element, pluginName, new Plugin(element, method_or_options) );
+				}
+			});
+		});
+		
+	} else if (method_or_options == 'obj') {
+		
+		// return the plugin object instance
+		var responseArr = [];
+		
+		this.each(function(index, element) {
+				
+			// this refers to the html element in the collection
+			isInstantiated(element, {
+				yes: function(jtrans) {
+					
+					responseArr.push(jtrans);
+				},
+				no: function() {
+					
+					var plug = $.data(element, pluginName, new Plugin(element) );
+					
+					responseArr.push(plug);
+				}
+			});
+		});
+		
+		return respond(responseArr);
+		
+	} else if ( typeof method_or_options === 'string' && method_or_options != 'obj') {
+		
+		var responseArr = [];
+		
+		this.each(function() {
+			
+			isInstantiated(this, {
+				yes: function(jtrans) {
+					// run the method requested using the jtrans context
+					responseArr.push( jtrans[method_or_options].apply(jtrans, args) );
+				},
+				no: function() {
+					// if not, throw error
+					throw new Error('This element\'s \'' + pluginName + ' plugin has not yet been initialized');
+				}
+			});
+		});
+		
+		return respond(responseArr);
+	}
+};
+
+return Plugin;
+	
+});
